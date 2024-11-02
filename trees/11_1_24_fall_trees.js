@@ -6,7 +6,8 @@ let drawControls = false;
 let trees = []
 
 function setup() {
-  createCanvas(cw, ch);
+  let canvas = createCanvas(cw, ch);
+  canvas.parent('#canvas-container');
   colorMode(HSL);
   let numTrees = random(3,7)
   let center = {x:cw/2, y:ch-bottom}

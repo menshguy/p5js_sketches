@@ -3,7 +3,8 @@ let cw = 600;
 let ch = 600;
 
 function setup() {
-  createCanvas(cw, ch);
+  let canvas = createCanvas(cw, ch);
+  canvas.parent('#canvas-container');
   colorMode(HSL);
 }
 

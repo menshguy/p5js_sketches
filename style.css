@@ -2,9 +2,15 @@ body {
     font-family: Arial, sans-serif;
 }
 
+h1 {
+    margin: 5px 0 5px 0;
+}
+
+/* Main Nav */
 nav ul {
     list-style-type: none;
     padding: 0;
+    margin-top: 0;
     background-color: #333;
 }
 
@@ -21,4 +27,15 @@ nav ul li a {
 
 nav ul li a:hover {
     background-color: #555;
+}
+
+/* Sub Nav */
+ul.subNav{
+    list-style-type: none; /* Remove bullet points */
+    padding: 0; /* Remove default padding */
+    margin: 0 0 10px 0; /* Remove default margin */
+    display: flex; /* Use flexbox to arrange items horizontally */
+}
+ul.subNav li {
+    margin-right: 20px; /* Add some space between items */
 }

@@ -5,7 +5,8 @@ let x1, x2, y1, y2, endX, endY;
 let lines = []
 
 function setup() {
-  createCanvas(cw, ch);
+  let canvas = createCanvas(cw, ch);
+  canvas.parent('#canvas-container');
   colorMode(HSL);
   let numLines = 3
   
@@ -31,7 +32,6 @@ function setup() {
 
 function draw() {
   background("antiquewhite");
-
  
   //Draw the Lines
   lines.forEach(l => {
