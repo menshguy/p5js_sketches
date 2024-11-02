@@ -72,33 +72,42 @@ function draw() {
 }
 
 function mousePressed() {
-  lines.forEach(line => {
-    let p = line.controlPoints
-    let x1 = p[0].x
-    let y1 = p[0].y
-    let x2 = p[1].x
-    let y2 = p[1].y
-    if (dist(mouseX, mouseY, x1, y1) < 10) {
-      line.isDragging = {i: 0};
-    }
-    if (dist(mouseX, mouseY, x2, y2) < 10) {
-      line.isDragging = {i: 1};
-    }
-  });
+  // Check if mouse is inside canvas
+  if (mouseX >= 0 && mouseX <= cw && mouseY >= 0 && mouseY <= ch) {
+    lines.forEach(line => {
+      let p = line.controlPoints
+      let x1 = p[0].x
+      let y1 = p[0].y
+      let x2 = p[1].x
+      let y2 = p[1].y
+      if (dist(mouseX, mouseY, x1, y1) < 10) {
+        line.isDragging = {i: 0};
+      }
+      if (dist(mouseX, mouseY, x2, y2) < 10) {
+        line.isDragging = {i: 1};
+      }
+    });
+  }
 }
 
 function mouseDragged() {
-  lines.forEach(line => {
-    let p = line.controlPoints
-    if (line.isDragging) {
-      p[line.isDragging.i].x = mouseX;
-      p[line.isDragging.i].y = mouseY;
-    }
-  });
+  // Check if mouse is inside canvas
+  if (mouseX >= 0 && mouseX <= cw && mouseY >= 0 && mouseY <= ch) {
+    lines.forEach(line => {
+      let p = line.controlPoints
+      if (line.isDragging) {
+        p[line.isDragging.i].x = mouseX;
+        p[line.isDragging.i].y = mouseY;
+      }
+    });
+  }
 }
 
 function mouseReleased() {
-  lines.forEach(line => {
-    line.isDragging = false;
-  });
+  // Check if mouse is inside canvas
+  if (mouseX >= 0 && mouseX <= cw && mouseY >= 0 && mouseY <= ch) {
+    lines.forEach(line => {
+      line.isDragging = false;
+    });
+  }
 }

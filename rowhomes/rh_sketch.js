@@ -396,7 +396,10 @@ function shuffleArray(arr) {
 
 // -- Events -- //
 function mousePressed(){
-  clear();
-  setup();
-  redraw();
+  // Check if mouse is inside canvas
+  if (mouseX >= 0 && mouseX <= cw && mouseY >= 0 && mouseY <= ch) {
+    clear();
+    setup();
+    redraw();
+  }
 }
