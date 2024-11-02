@@ -85,6 +85,8 @@ function marker_line (x, y, w, h, settings={}) {
 
 // -- Events -- //
 function mousePressed(){
-  clear();
-  redraw();
+  if (mouseX >= 0 && mouseX <= cw && mouseY >= 0 && mouseY <= ch) {
+    clear();
+    redraw();
+  }
 }
