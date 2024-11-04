@@ -22,7 +22,7 @@ function setup() {
 }
 
 function draw() {
-  background(202, 50, 95);
+  background(25, 35, 97);
   noLoop();
   
   //Draw Trees
@@ -31,10 +31,16 @@ function draw() {
   noFill()
   trees.forEach(tree => tree.draw()); //Draw the Tree(s)
 
+  //Draw Snow
+  noStroke();
+  fill(217, 43, 98);
+  rect(0, ch-bottom, cw, bottom)
+  
   //Draw Base Line
   stroke(5, 42, 12);
   strokeWeight(1);
   drawBaseLine(100, ch-bottom, cw-100)
+  noFill();
 }
 
 function drawBaseLine(xStart, y, xEnd){

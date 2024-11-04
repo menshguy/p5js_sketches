@@ -92,7 +92,6 @@ function draw() {
   trees.forEach(tree => {
     tree.drawTree();
     tree.drawLeaves();
-    tree.drawLeaves
   }); 
 
   //Draw Base Line
@@ -106,6 +105,7 @@ class Tree {
   constructor({numLines, startPoint, treeHeight, treeWidth}){
     Object.assign(this, { numLines, startPoint, treeHeight, treeWidth });
     this.lines = this.generateTree();
+    this.leaves = this.generateLeaves();
   }
 
   generateTree() {
@@ -131,49 +131,52 @@ class Tree {
     return lines;
   }
 
+  generateLeaves() {
+    let leaves = [];
+    let radius = random(125, 150); // Create the large enclosing circle, but don't draw it
+    // Draw small half-circles on the right half only
+    let numCircles = 900; // Number of small half-circles
+    for (let i = 0; i < numCircles; i++) {
+      // Random angle between 0 and PI for the right half
+      let angle = random(-PI, PI);
+      // Random radius within the main circle's radius
+      let r = sqrt(random(0,0.5)) * radius;
+      let x = cos(angle) * r;
+      let y = sin(angle) * r;
+      // Calculate the angle of the half-circle to face the center
+      let angleToCenter = atan2(y, x);
+
+      // Draw the half-circle
+      
+      let w = random(10,20)
+      let h = random(10,20)
+      leaves.push({x, y, w, h, start: angleToCenter - HALF_PI, stop: angleToCenter + HALF_PI})
+    }
+    return leaves;
+  }
+
   drawLeaves() {
     let {startPoint, treeHeight} = this;
+
+    stroke("black");
+    strokeWeight(1);
+    fill
 
     // Draw everything within a push-pop block to apply rotation to this block only
     push();
     translate(startPoint.x, startPoint.y-(bottom/2)-(treeHeight));
     rotate(radians(-90));
 
-    // Draw the large white circle
-    let radius = random(125, 150);
-    noFill()
-    noStroke()
-    ellipse(0, 0, radius, radius);
-
-    // Draw small half-circles on the right half only
-    let numCircles = 1000; // Number of small half-circles
-    for (let i = 0; i < numCircles; i++) {
-      
-      // Random angle between 0 and PI for the right half
-      let angle = random(-PI, PI);
-      
-      // Random radius within the main circle's radius
-      let r = sqrt(random(0,0.5)) * radius;
-      let x = cos(angle) * r;
-      let y = sin(angle) * r;
-      
-      // Calculate the angle of the half-circle to face the center
-      let angleToCenter = atan2(y, x);
-
-      // Draw the half-circle
+    this.leaves.forEach( ({x, y, w, h, start, stop}) => {
       fill(random([
         color(44, 59, 77), 
         color(35, 45, 47),
         color(19, 66, 66),
         color(86, 38, 55)
       ]))
-      stroke("black")
-      strokeWeight(1)
-      // noStroke()
-      let w = random(10,20)
-      let h = random(10,20)
-      arc(x, y, w, h, angleToCenter - HALF_PI, angleToCenter + HALF_PI);
-    }
+      arc(x, y, w, h, start, stop);
+    })
+    
     pop();
   }
 
@@ -217,6 +220,7 @@ class Tree {
 
   clear() {
     this.lines = []
+    this.leaves = []
   }
 }
 
@@ -545,7 +549,10 @@ function shuffleArray(arr) {
 
 // -- Events -- //
 function mousePressed(){
-  clear();
-  setup();
-  redraw();
+  if (mouseX >= 0 && mouseX <= cw && mouseY >= 0 && mouseY <= ch) {
+    trees.forEach(tree => tree.clear());
+    clear();
+    setup();
+    draw();
+  }
 }
