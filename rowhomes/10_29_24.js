@@ -1,10 +1,19 @@
 let buffers, rowhomes, bottom;
-let cw = 600;
-let ch = 600;
+let cw, ch;
 
 function setup() {
+  // Calc distance from canvas to top of screen
+  let container = document.getElementById("canvas-container")
+  let rect = container.getBoundingClientRect();
+  let distanceFromTop = rect.top;
+
+  // Set width and height to full window
+  cw = windowWidth || 600;
+  ch = (windowHeight - distanceFromTop) || 600;
   let canvas = createCanvas(cw, ch);
   canvas.parent('#canvas-container');
+  
+  //General Settings
   colorMode(HSL);
   bottom = 25;
   rowhomes = [];

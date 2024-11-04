@@ -1,17 +1,23 @@
-let cw = 600;
-let ch = 600;
+let cw, ch;
 let bottom = 100;
 let drawControls = false;
 let trees =  [];
 
 function setup() {
+  // Calc distance from canvas to top of screen
+  let container = document.getElementById("canvas-container")
+  let rect = container.getBoundingClientRect();
+  let distanceFromTop = rect.top;
+
+  // Set width and height to full window
+  cw = windowWidth || 600;
+  ch = (windowHeight - distanceFromTop) || 600;
   let canvas = createCanvas(cw, ch);
   canvas.parent('#canvas-container');
-  colorMode(HSL);
-  
 }
 
 function draw() {
+  colorMode(HSL);
   background(38, 59, 87)
   noLoop();
 

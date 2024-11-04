@@ -1,6 +1,5 @@
-let cw = 600;
-let ch = 600;
-let bottom = 100;
+let cw, ch;
+let bottom = 50;
 let drawControls = false;
 let img;
 let trees =  [];
@@ -11,17 +10,25 @@ function preload() {
 }
 
 function setup() {
+  // Calc distance from canvas to top of screen
+  let container = document.getElementById("canvas-container")
+  let rect = container.getBoundingClientRect();
+  let distanceFromTop = rect.top;
+
+  // Set width and height to full window
+  cw = windowWidth || 600;
+  ch = (windowHeight - distanceFromTop) || 600;
   let canvas = createCanvas(cw, ch);
   canvas.parent('#canvas-container');
-  colorMode(HSL);
 }
 
 function draw() {
+  colorMode(HSL);
   background(38, 59, 87)
   noLoop();
 
   let trees = [];
-  let numTrees = random(3,7)
+  let numTrees = 1
   let center = {x:cw/2, y:ch-bottom}
   for (let i = 0; i < numTrees; i++) {
     let numLines = floor(random(5,21));
@@ -33,17 +40,12 @@ function draw() {
   }
   
   //Draw Trees
-  stroke(5, 42, 12);
-  strokeWeight(2);
-  noFill()
   trees.forEach(tree => {
     tree.drawTree();
     tree.drawLeaves();
   }); 
 
   //Draw Base Line
-  stroke(5, 42, 12);
-  strokeWeight(1);
   drawBaseLine(100, ch-bottom, cw-100)
 
   //Draw Texture
@@ -54,6 +56,9 @@ function draw() {
 
 function drawBaseLine(xStart, y, xEnd){
   let x = xStart;
+  stroke(5, 42, 12);
+  strokeWeight(1);
+  noFill();
   
   while (x < xEnd){
     let tickLength;
@@ -131,7 +136,7 @@ class Tree {
     let leaves = [];
     let radius = random(125, 150); // Create the large enclosing circle, but don't draw it
     // Draw small half-circles on the right half only
-    let numCircles = 900; // Number of small half-circles
+    let numCircles = 500; // Number of small half-circles
     for (let i = 0; i < numCircles; i++) {
       // Random angle between 0 and PI for the right half
       let angle = random(-PI, PI);
@@ -143,22 +148,72 @@ class Tree {
       let angleToCenter = atan2(y, x);
 
       // Draw the half-circle
-      
-      let w = random(10,20)
-      let h = random(10,20)
+      let w = random(5,10)
+      let h = random(5,10)
       leaves.push({x, y, w, h, start: angleToCenter - HALF_PI, stop: angleToCenter + HALF_PI})
     }
     return leaves;
   }
 
+  drawBlob(x, y, r) {
+    beginShape();
+    
+    // Number of points to create a rounder shape
+    let points = 12;
+    let angleStep = TWO_PI / points;
+    
+    // Array to store the positions of each point
+    let vertices = [];
+    
+    // Generate vertices with random radii for irregularity
+    for (let i = 0; i < points; i++) {
+      let angle = i * angleStep;
+      let radiusOffset = random(-20, 30); // Adjusts the irregularity of the blob
+      let distance = r + radiusOffset;
+      
+      // Calculate (x, y) of each point
+      let px = x + cos(angle) * distance;
+      let py = y + sin(angle) * distance;
+      
+      vertices.push({ x: px, y: py });
+    }
+    
+    // Draw convex bezier curves between points
+    for (let i = 0; i < vertices.length; i++) {
+      let current = vertices[i];
+      let next = vertices[(i + 1) % vertices.length]; // Loop back to start
+      
+      // Control points for a convex curve
+      let control1 = {
+        x: current.x + (next.x - x) * 0.2 + random(-10, 10),
+        y: current.y + (next.y - y) * 0.2 + random(-10, 10)
+      };
+      
+      let control2 = {
+        x: next.x + (current.x - x) * 0.2 + random(-10, 10),
+        y: next.y + (current.y - y) * 0.2 + random(-10, 10)
+      };
+      
+      if (i === 0) {
+        vertex(current.x, current.y);
+      }
+      bezierVertex(control1.x, control1.y, control2.x, control2.y, next.x, next.y);
+    }
+    
+    endShape(CLOSE);
+  }
+
   drawLeaves() {
     let {startPoint, treeHeight} = this;
-
-    stroke("black");
+    
+    stroke(0);
     strokeWeight(1);
-    fill
+    fill("lightblue")
+    this.drawBlob(width / 2, height / 2, 150); // Center of canvas, radius 150
 
     // Draw everything within a push-pop block to apply rotation to this block only
+    stroke("black");
+    strokeWeight(1);
     push();
     translate(startPoint.x, startPoint.y-(bottom/2)-(treeHeight));
     rotate(radians(-90));
@@ -180,6 +235,10 @@ class Tree {
     //Draw Tree Branches
     this.lines.forEach(l => {
       let {startPoint, controlPoints, endPoint} = l
+
+      //Set Styles
+      strokeWeight(1);
+      noFill()
 
       //Style the line
       beginShape();
@@ -212,6 +271,10 @@ class Tree {
         line(endPoint.x, endPoint.y, controlPoints[1].x, controlPoints[1].y)
       }
     })
+    
+    //Unset Styles
+    noStroke();
+    noFill();
   }
 
   clear() {

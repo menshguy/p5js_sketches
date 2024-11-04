@@ -1,13 +1,25 @@
-let cw = 600;
-let ch = 600;
+let cw, ch;
 let bottom = 100;
 let drawControls = false;
 let trees = []
 
 function setup() {
+  // Sketch Settings
+  colorMode(HSL);
+  background(25, 35, 97);
+  noLoop();
+
+  // Calc distance from canvas to top of screen
+  let container = document.getElementById("canvas-container")
+  let rect = container.getBoundingClientRect();
+  let distanceFromTop = rect.top;
+
+  // Set width and height to full window
+  cw = windowWidth || 600;
+  ch = (windowHeight - distanceFromTop) || 600;
   let canvas = createCanvas(cw, ch);
   canvas.parent('#canvas-container');
-  colorMode(HSL);
+  
   let numTrees = 3
   let center = {x:cw/2, y:ch-bottom}
   
@@ -22,9 +34,6 @@ function setup() {
 }
 
 function draw() {
-  background(25, 35, 97);
-  noLoop();
-  
   //Draw Trees
   stroke(5, 42, 12);
   strokeWeight(2);
