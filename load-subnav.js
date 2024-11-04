@@ -1,11 +1,11 @@
 /**
- * 1. Add a div with ID <div id="nav-container"></div>
+ * 1. Add a div with ID <div id="subnav-container"></div>
  * 2. Make the path to nav.html dynamic, such that it works in prod & dev 
  *    and from root & subdirectories.
  */
-fetch("/nav.html")
+fetch("./subnav.html")
     .then(response => response.text())
     .then(data => {
-        document.getElementById("nav-container").innerHTML = data;
+        document.getElementById("subnav-container").innerHTML = data;
     })
     .catch(error => console.error("Error loading navigation:", error));
