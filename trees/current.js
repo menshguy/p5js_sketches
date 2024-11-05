@@ -16,10 +16,12 @@ function setup() {
   let distanceFromTop = rect.top;
 
   // Set width and height to full window
-  cw = windowWidth || 600;
-  ch = (windowHeight - distanceFromTop) || 600;
+  // cw = windowWidth || 600;
+  // ch = (windowHeight - distanceFromTop) || 600;
+  cw = 600;
+  ch = 600;
   let canvas = createCanvas(cw, ch);
-  canvas.parent('#canvas-container');
+  canvas.parent(container);
 }
 
 function draw() {

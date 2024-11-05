@@ -10,23 +10,48 @@ h3 {
 }
 
 /* Main Nav */
-nav ul {
-    list-style-type: none;
-    padding: 0;
-    margin-top: 0;
-    background-color: #333;
+.mainnav {
+  background-color: antiquewhite;
+  margin: 0 0 10px 0;
 }
-nav ul li {
-    display: inline;
-    margin-right: 10px;
+.mainnav ul ul {
+  display: none; /* Hide submenus by default */
+  position: absolute;
+  background-color: #fff; /* Optional: Set background color */
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2); /* Optional: Add shadow for better visibility */
 }
-nav ul li a {
-    color: white;
-    text-decoration: none;
-    padding: 10px;
+/* Show submenus on hover */
+.mainnav ul li:hover > ul {
+  display: block;
 }
-nav ul li a:hover {
-    background-color: #555;
+/* Style for the main navigation items */
+.mainnav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  position: relative;
+}
+.mainnav ul li {
+  position: relative;
+  display: inline-block; /* Align items horizontally */
+}
+/* Style for links */
+.mainnav ul li a {
+  display: block;
+  padding: 10px 15px;
+  text-decoration: none;
+  color: #333; /* Optional: Set text color */
+  cursor: pointer; /* Change cursor to hand on hover */
+}
+/* Optional: Style for submenu links */
+.mainnav ul ul li a {
+  padding: 10px;
+  color: #333; /* Optional: Set text color */
+  white-space: nowrap; /* Prevent text wrapping */
+  cursor: pointer; /* Change cursor to hand on hover */
 }
 
 /* Sub Nav */
@@ -50,6 +75,7 @@ ul.subNav li{
     justify-content: space-between;
     align-items: baseline;
     font-size: 12px;
+    margin: 0 0 5px 0;
 }
 .header * {
     margin: 0 5px 0 5px;
