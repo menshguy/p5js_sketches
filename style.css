@@ -2,8 +2,10 @@ body {
     font-family: Arial, sans-serif;
     margin: 0
 }
-
 h1 {
+    margin: 5px 0 5px 0;
+}
+h3 {
     margin: 5px 0 5px 0;
 }
 
@@ -14,18 +16,15 @@ nav ul {
     margin-top: 0;
     background-color: #333;
 }
-
 nav ul li {
     display: inline;
     margin-right: 10px;
 }
-
 nav ul li a {
     color: white;
     text-decoration: none;
     padding: 10px;
 }
-
 nav ul li a:hover {
     background-color: #555;
 }
@@ -34,9 +33,41 @@ nav ul li a:hover {
 ul.subNav{
     list-style-type: none; /* Remove bullet points */
     padding: 0; /* Remove default padding */
-    margin: 0 0 10px 0; /* Remove default margin */
+    margin: 0 5px 15px 5px;
     display: flex; /* Use flexbox to arrange items horizontally */
 }
-ul.subNav li {
+ul.subNav li{
     margin-right: 20px; /* Add some space between items */
+    padding: 5px 20px;
+    background-color: rgb(66, 132, 255);
+    color: white;
+    border-radius: 5px;
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 12px;
+}
+.header * {
+    margin: 0 5px 0 5px;
+}
+.header p {
+    margin: 0 0 0 10px;
+}
+
+/* Version Nav */
+ul.versionnav{
+    list-style-type: none; /* Remove bullet points */
+    padding: 0; /* Remove default padding */
+    margin: 0; /* Remove default margin */
+    display: flex; /* Use flexbox to arrange items horizontally */
+}
+ul.versionnav li {
+    margin: 0 0 0 5px; /* Add some space between items */
+}
+ul.versionnav .old {
+    display: flex;
 }
