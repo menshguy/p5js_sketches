@@ -96,6 +96,7 @@ function draw() {
   //Draw Texture
   blendMode(MULTIPLY);
   image(textureImg, 0, 0, cw, ch);
+  // treeBatch.circleBuffer.filter(BLUR, 5);
   image(treeBatch.circleBuffer, 0, 0);
   blendMode(BLEND); 
 }
@@ -185,22 +186,33 @@ class TreeBatch {
     let max_x = width-50;
     let curr_y = rowSize
     for(let i=0; i < height - treeBatchHeight - bottom; i+=rowSize){
-        let _y = height - bottom - (curr_y)
-        let min_y = _y
-        let max_y = min_y + rowSize;
-        for(let j=0; j < numPointsPerRow; j++){ 
-          let p = {
-            x: random(min_x, max_x), 
-            y: random(min_y, max_y)
-          }
-          if (p.y >= treeBatchHeight) points.push(p); // dont push points that exceed the height. Remember, lower numbers for y are higher on canvas
+      let row = [];
+      let _y = height - bottom - (curr_y)
+      let min_y = _y
+      let max_y = min_y + rowSize;
+      for(let j=0; j < numPointsPerRow; j++){
+        let p = {
+          x: random(min_x, max_x), 
+          y: random(min_y, max_y)
         }
-        curr_y += rowSize
-        //Increment min/max x, while making sure we dont exceed midpoint. Otherwise, you will just start an inverted triange shape and end up with an hour glass
-        min_x += min_x > width/2 ? 0 : random(-50, 100)
-        max_x += max_x < width/2 ? 0 : random(-100, 50)
-    }
+        if (p.y >= treeBatchHeight) row.push(p); // dont push points that exceed the height. Remember, lower numbers for y are higher on canvas
+      }
+      // Find the point with the smallest and largest x value in the row
+      let minPoint = row.reduce((min, p) => p.x < min.x ? p : min, row[0]);
+      if (minPoint) minPoint.isLeftMost = true;
+      let maxPoint = row.reduce((max, p) => p.x > max.x ? p : max, row[0]);
+      if (maxPoint) maxPoint.isRightMost = true;
 
+      console.log('Min Point:', minPoint);
+      console.log('Max Point:', maxPoint);
+
+      //Push array or points in points array
+      points.push(row)
+      curr_y += rowSize
+      //Increment min/max x, while making sure we dont exceed midpoint. Otherwise, you will just start an inverted triange shape and end up with an hour glass
+      min_x += min_x > width/2 ? 0 : random(-50, 100)
+      max_x += max_x < width/2 ? 0 : random(-100, 50)
+    }
     return points;
   }
 
@@ -243,59 +255,62 @@ class TreeBatch {
     let circles = [];
     
     // Create leaves that surround and face each point
-    points.forEach(p => {
-      //Leaves will be drawn within this arc shape
-      let {start, stop, quad, boundaryRadius} = this.getLeafBoundary(p)
-      console.log("r", floor(boundaryRadius), p.y)
-      
-      if (debug) {
-        fill("red");
-        circle(p.x,p.y,5);
-      }
-
-      if (debug) {
-        fill(color(300, 100, 50, 0.5))
-        stroke("green")
-        arc(p.x, p.y, boundaryRadius, boundaryRadius, start, stop )
-      }
-
-      circles.push({
-        x:p.x, y: p.y, r:boundaryRadius
-      })
-      
-      // For each leaf, find a spot around the point to draw it
-      for (let i = 0; i < numLeavesPerPoint; i++) {
-        let w = random(leafWidth-2,leafWidth+2)
-        let h = random(leafWidth-2,leafWidth+2)
+    points.forEach(row => {
+      row.forEach((p, i) => {
+        //Leaves will be drawn within this arc shape
+        let {start, stop, quad, boundaryRadius} = this.getLeafBoundary(p)
         
-        // Only draw leaves if they fall within the boundary 
-        // The following code ensures the angle falls within acceptable range
-        let angle;
-        if (quad === "lr" || quad === "ll"){
-          angle = random(start, stop)
-        }
-        if (quad === "ur") {
-          angle = random(-start, stop)
-        }
-        if (quad === "ul") {
-          angle = random(start, stop)
-        }
-        let r = boundaryRadius/2
-        let x = p.x + (cos(angle) * random(r-(r/2), r));
-        let _y = p.y + (sin(angle) * random(r-(r/2), r));
-        let y = _y > (height-bottom) ? height-bottom+random(0,10) : _y; //If y is below bottom (ground), set to y to bottom with some variance to draw "fallen leaves"
-  
         if (debug) {
-          fill("blue")
-          circle(x,y,w)
+          fill("red");
+          circle(p.x,p.y,5);
         }
 
-        leaves.push({
-          x, y, w, h, 
-          start: angle - HALF_PI, 
-          stop: angle + HALF_PI
+        if (debug) {
+          fill(color(300, 100, 50, 0.5))
+          stroke("green")
+          arc(p.x, p.y, boundaryRadius, boundaryRadius, start, stop )
+        }
+
+        circles.push({
+          x:p.x, y: p.y, r:boundaryRadius, 
+          isLeftMost: p?.isLeftMost, 
+          isRightMost: p?.isRightMost
         })
-      }
+        
+        // For each leaf, find a spot around the point to draw it
+        for (let i = 0; i < numLeavesPerPoint; i++) {
+          let w = random(leafWidth-2,leafWidth+2)
+          let h = random(leafWidth-2,leafWidth+2)
+          
+          // Only draw leaves if they fall within the boundary 
+          // The following code ensures the angle falls within acceptable range
+          let angle;
+          if (quad === "lr" || quad === "ll"){
+            angle = random(start, stop)
+          }
+          if (quad === "ur") {
+            angle = random(-start, stop)
+          }
+          if (quad === "ul") {
+            angle = random(start, stop)
+          }
+          let r = boundaryRadius/2
+          let x = p.x + (cos(angle) * random(r-(r/2), r));
+          let _y = p.y + (sin(angle) * random(r-(r/2), r));
+          let y = _y > (height-bottom) ? height-bottom+random(0,10) : _y; //If y is below bottom (ground), set to y to bottom with some variance to draw "fallen leaves"
+    
+          if (debug) {
+            fill("blue")
+            circle(x,y,w)
+          }
+
+          leaves.push({
+            x, y, w, h, 
+            start: angle - HALF_PI, 
+            stop: angle + HALF_PI
+          })
+        }
+      })
     })
 
     return {leaves, circles};
@@ -313,10 +328,14 @@ class TreeBatch {
 
   generateCircleBufferImage() {
     this.circleBuffer.noStroke();
-    this.circleBuffer.fill(lightFallColorFills[3]);
-    this.circleBuffer.noStroke();
+    this.circleBuffer.fill(lightFallColorFills[random([0,1,2,3,4])]);
     this.circles.forEach(c => {
       // this.circleBuffer.arc(p.x, p.y, r, r, start, stop);
+      if (c.isLeftMost || c.isRightMost) {
+        this.circleBuffer.stroke(0);
+      } else {
+        this.circleBuffer.noStroke();
+      }
       this.circleBuffer.circle(c.x, c.y, c.r);
     })
     this.circleBuffer.noFill();
