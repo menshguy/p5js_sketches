@@ -5,6 +5,7 @@ let img;
 let trees =  [];
 let debug = false;
 let fallColorFills;
+let lightFallColorFills;
 
 function preload() {
   // img = loadImage('../textures/paper_smooth.jpg');
@@ -55,7 +56,7 @@ function draw() {
 
   /** General Settings */
   let center = {x:cw/2, y:ch-bottom};
-  let treeBatchHeight = height - bottom - random(200,500);
+  let treeBatchHeight = height - bottom - random(400,500);
   /**
    * Leaves:
    *  1. Points are draw randomly across each "row"
@@ -65,8 +66,8 @@ function draw() {
    *      - The idea behind arcs to avoid too much clutter in the center
    */
   let leafWidth = random(4, 5);
-  let rowSize = 15; //x points will drawn randominly in each row. rows increment up by this amount
-  let numPointsPerRow = random(1,2);
+  let rowSize = 50; //x points will drawn randominly in each row. rows increment up by this amount
+  let numPointsPerRow = random(8,12);
   let numLeavesPerPoint = random(15, 30); // # of leaves around each leaf point
    /**
    * Trunks:
@@ -87,24 +88,26 @@ function draw() {
   //Draw Trees in order
   treeBatch.drawTrunks();
   treeBatch.drawLeaves();
-  treeBatch.drawCircles();
+  treeBatch.generateCircleBufferImage();
 
   //Draw Ground Squiggly (on top of Ground Fill & trees)
   drawGroundLine(100, ch-bottom, cw-100)
 
   //Draw Texture
   blendMode(MULTIPLY);
-  image(treeBatch.circleBuffer, 0, 0);
   image(textureImg, 0, 0, cw, ch);
+  image(treeBatch.circleBuffer, 0, 0);
   blendMode(BLEND); 
 }
 
 class TreeBatch {
   constructor({treeBatchHeight, numTrunks, numLinesPerTrunk, leafWidth, numPointsPerRow, numLeavesPerPoint, rowSize, center, trunkHeight, trunkWidth}){
     Object.assign(this, { treeBatchHeight, numTrunks, numLinesPerTrunk, leafWidth, numPointsPerRow, numLeavesPerPoint, rowSize, center, trunkHeight, trunkWidth });
-    this.midpoint = {x: center.x ,y: center.y - (treeBatchHeight/2)}
+    this.midpoint = {x: center.x ,y: center.y - (center.y - treeBatchHeight)/2}
     if (debug){
       fill("red")
+      circle(this.center.x,this.center.y,20)
+      circle(this.midpoint.x,treeBatchHeight,20)
       circle(this.midpoint.x,this.midpoint.y,20)
     }
     this.circleBuffer = createGraphics(cw, ch);
@@ -181,7 +184,7 @@ class TreeBatch {
     let min_x = 50;
     let max_x = width-50;
     let curr_y = rowSize
-    for(let i=0; i < treeBatchHeight; i+=rowSize){
+    for(let i=0; i < height - treeBatchHeight - bottom; i+=rowSize){
         let _y = height - bottom - (curr_y)
         let min_y = _y
         let max_y = min_y + rowSize;
@@ -201,10 +204,14 @@ class TreeBatch {
     return points;
   }
 
-  getBoundary(p){
+  getLeafBoundary(p){
     let {midpoint} = this;
     let start, stop, quad;
-    let boundaryRadius = random(20000 / p.y, 40000 / p.y);
+    let min = p.y >= 50 ? .2 * p.y : 50
+    let max = p.y >= 50 ? .35 * p.y : 50
+    let boundaryRadius = random(min, max); // radius grows as we get higher, so that leaves are more spread out
+    
+    // configure each boundary. Start/Stop create an open face circle. set debug to true to see
     if (p.x < midpoint.x && p.y < midpoint.y) {
       //upper left, empty lower right
       quad = "ul";
@@ -238,7 +245,7 @@ class TreeBatch {
     // Create leaves that surround and face each point
     points.forEach(p => {
       //Leaves will be drawn within this arc shape
-      let {start, stop, quad, boundaryRadius} = this.getBoundary(p)
+      let {start, stop, quad, boundaryRadius} = this.getLeafBoundary(p)
       console.log("r", floor(boundaryRadius), p.y)
       
       if (debug) {
@@ -304,7 +311,7 @@ class TreeBatch {
     })
   }
 
-  drawCircles() {
+  generateCircleBufferImage() {
     this.circleBuffer.noStroke();
     this.circleBuffer.fill(lightFallColorFills[3]);
     this.circleBuffer.noStroke();
