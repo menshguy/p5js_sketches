@@ -3,6 +3,10 @@ let cw, ch;
 let drawControls = false;
 let trees = []
 
+function preload() {
+  textureImg = loadImage('../textures/watercolor_1.jpg');
+}
+
 function setup() {
   // Calc distance from canvas to top of screen
   let container = document.getElementById("canvas-container")
@@ -103,10 +107,10 @@ function draw() {
     tree.drawLeaves();
   }); 
 
-  //Draw Base Line
-  // stroke(5, 42, 12);
-  // strokeWeight(1.5);
-  // drawBaseLine(0, ch-bottom, cw)
+  //Draw Texture
+  blendMode(MULTIPLY);
+  image(textureImg, 0, 0, cw, ch);
+  blendMode(BLEND); 
 }
 
 

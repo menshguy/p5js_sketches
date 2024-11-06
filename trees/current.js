@@ -3,6 +3,7 @@ let bottom = 50;
 let drawControls = false;
 let img;
 let trees =  [];
+let debug = false;
 
 function preload() {
   // img = loadImage('../textures/paper_smooth.jpg');
@@ -26,28 +27,24 @@ function setup() {
 
 function draw() {
   colorMode(HSL);
-  background(38, 59, 87)
+  background(38, 92, 67)
   noLoop();
 
-  let trees = [];
-  let numTrees = 1
   let center = {x:cw/2, y:ch-bottom}
-  for (let i = 0; i < numTrees; i++) {
-    let numLines = floor(random(5,21));
-    let startPoint = {x: random(center.x-(cw/2 - 100), center.x+(cw/2 - 100)), y: center.y};
-    let treeHeight = random(100,200);
-    let treeWidth = random(100,200)
-    let tree = new Tree({numLines, startPoint, treeHeight, treeWidth})
-    trees.push(tree)
-  }
+  let maxHeight = height - random(0,300);
+  let levelSize = 5;
+  let leafWidth = random(4, 5);
+  let numLeafPoints = random(5,10);
+  let numLeaves = random(5, 10); // # of leaves around each leaf point
+  let numLines = random(4,8);
+  let numTrunks = random(8, 15);
+  let trunkHeight = random(25,50);
+  let trunkWidth = random(25,50)
+  let tree = new Tree({maxHeight, numTrunks, numLines, leafWidth, numLeafPoints, numLeaves, levelSize, center, trunkHeight, trunkWidth})
   
-  //Draw Trees
-  trees.forEach(tree => {
-    tree.drawTree();
-    tree.drawLeaves();
-  }); 
-
-  //Draw Base Line
+  //Draw Trucks, Leaves, Baseline
+  tree.drawTrunks();
+  tree.drawLeaves();
   drawBaseLine(100, ch-bottom, cw-100)
 
   //Draw Texture
@@ -56,105 +53,195 @@ function draw() {
   blendMode(BLEND); 
 }
 
-function drawBaseLine(xStart, y, xEnd){
-  let x = xStart;
-  stroke(5, 42, 12);
-  strokeWeight(1);
-  noFill();
-  
-  while (x < xEnd){
-    let tickLength;
-    let tickBump = random(-4, 0);
-    let tickType = random(["long", "short", "long", "short", "space"]);
-
-    if(tickType === "long"){
-      tickLength = random(10, 25);
-      beginShape();
-      vertex(x, y, 0);
-      let x2 = x;
-      let y2 = y;
-      let cx1 = x + tickLength / 2;
-      let cy1 = y + tickBump;
-      let cx2 = x + tickLength;
-      let cy2 = y;
-      bezierVertex(x2, y2, cx1, cy1, cx2, cy2);
-      endShape();
-    }
-    else if(tickType === "short"){
-      tickLength = random(3, 10);
-      beginShape();
-      vertex(x, y, 0);
-      let x2 = x;
-      let y2 = y;
-      let cx1 = x + tickLength / 2;
-      let cy1 = y + tickBump;
-      let cx2 = x + tickLength;
-      let cy2 = y;
-      bezierVertex(x2, y2, cx1, cy1, cx2, cy2);
-      endShape();
-    }
-    else if(tickType === "space"){
-      tickLength = random(5,25)
-    } 
-    else {
-      console.error("no such line type")
-    }
-
-    x += tickLength;
-  }
-}
-
 class Tree {
-  constructor({numLines, startPoint, treeHeight, treeWidth}){
-    Object.assign(this, { numLines, startPoint, treeHeight, treeWidth });
-    this.lines = this.generateTree();
+  constructor({maxHeight, numTrunks, numLines, leafWidth, numLeafPoints, numLeaves, levelSize, center, trunkHeight, trunkWidth}){
+    Object.assign(this, { maxHeight, numTrunks, numLines, leafWidth, numLeafPoints, numLeaves, levelSize, center, trunkHeight, trunkWidth });
+    this.midpoint = {x: center.x ,y: center.y - (maxHeight/2)}
+    if (debug){
+      fill("red")
+      circle(this.midpoint.x,this.midpoint.y,20)
+    }
+    this.trunks = this.generateTrunks();
     this.leaves = this.generateLeaves();
   }
 
-  generateTree() {
-    let {startPoint, numLines, treeHeight, treeWidth} = this;
-    let lines = [];
-
-    for (let i = 0; i < numLines; i++) {
-      let endPoint = {
-        x: startPoint.x + random(-(treeWidth/2), treeWidth/2), 
-        y: random((startPoint.y-bottom-treeHeight) + (treeHeight/2), startPoint.y-bottom-treeHeight)
+  generateTrunks() {
+    let {numTrunks, numLines, trunkHeight, trunkWidth} = this;
+    
+    let trunks = []
+    for (let j = 0; j < numTrunks; j++) {
+      let lines = [];
+      let startPoint = {
+        x: random(50, width-50),
+        y: height-bottom
+      };
+      for (let i = 0; i < numLines; i++) {
+        let endPoint = {
+          x: random(startPoint.x-(trunkWidth/2), startPoint.x+(trunkWidth/2)), 
+          y: random((startPoint.y-trunkHeight) + (trunkHeight/2), startPoint.y-bottom-trunkHeight)
+        }
+        let startControlPoint = {
+          x: startPoint.x, 
+          y: random(startPoint.y, endPoint.y)
+        }
+        let endControlPoint = {
+          x: endPoint.x < startPoint.x ? random(endPoint.x, startPoint.x) : random(startPoint.x, endPoint.x),
+          y: random(startControlPoint.y, endPoint.y)
+        }
+        let controlPoints = [startControlPoint, endControlPoint]
+        lines.push({ startPoint, endPoint, controlPoints })
       }
-      let startControlPoint = {
-        x: startPoint.x, 
-        y: random(startPoint.y, endPoint.y)
-      }
-      let endControlPoint = {
-        x: endPoint.x < startPoint.x ? random(endPoint.x, startPoint.x) : random(startPoint.x, endPoint.x),
-        y: random(startControlPoint.y, endPoint.y)
-      }
-      let controlPoints = [startControlPoint, endControlPoint]
-      lines.push({ startPoint, endPoint, controlPoints })
+      trunks.push(lines)
     }
-    return lines;
+    return trunks;
+  }
+
+  drawTrunks(){
+    //Draw Tree Branches
+    this.trunks.forEach(trunk => {
+      trunk.forEach(l => {
+        let {startPoint, controlPoints, endPoint} = l
+
+        //Set Styles
+        stroke(10, 39, 14)
+        strokeWeight(1.5);
+        noFill()
+
+        //Style the line
+        beginShape();
+        vertex(startPoint.x, startPoint.y)
+        bezierVertex(
+          controlPoints[0].x, controlPoints[0].y,
+          controlPoints[1].x, controlPoints[1].y,
+          endPoint.x, endPoint.y
+        )
+        endShape();
+      })
+    })
+    
+    //Unset Styles
+    noStroke();
+    noFill();
   }
 
   generateLeaves() {
+    let {maxHeight, midpoint, leafWidth, numLeafPoints, numLeaves, levelSize} = this;
+    let points = [];
     let leaves = [];
-    let radius = random(125, 150); // Create the large enclosing circle, but don't draw it
-    // Draw small half-circles on the right half only
-    let numCircles = 500; // Number of small half-circles
-    for (let i = 0; i < numCircles; i++) {
-      // Random angle between 0 and PI for the right half
-      let angle = random(-PI, PI);
-      // Random radius within the main circle's radius
-      let r = sqrt(random(0,0.5)) * radius;
-      let x = cos(angle) * r;
-      let y = sin(angle) * r;
-      // Calculate the angle of the half-circle to face the center
-      let angleToCenter = atan2(y, x);
-
-      // Draw the half-circle
-      let w = random(5,10)
-      let h = random(5,10)
-      leaves.push({x, y, w, h, start: angleToCenter - HALF_PI, stop: angleToCenter + HALF_PI})
+    let numLevels = height/levelSize;
+    
+    //Create the Points, used to group the leaves
+    let min_x = 0;
+    let max_x = width;
+    for(let i=0; i < numLevels; i++){
+      let current_y = i*levelSize
+      if (current_y < maxHeight) {
+        let min_y = height - bottom - (current_y);
+        let max_y = height - bottom - (current_y + levelSize);
+        for(let j=0; j < numLeafPoints; j++){ 
+          let p = {
+            x: random(min_x, max_x), 
+            y: random(min_y, max_y)
+          }
+          points.push(p);
+        }
+        min_x += random(-50, 100)
+        max_x += random(-100, 50)
+      }
     }
+
+    // Create leaves that surround and face each point
+    points.forEach(p => {
+      
+      if (debug) {
+        fill("red");
+        circle(p.x,p.y,5);
+      }
+
+      // Determine the quadrant of the point
+      let start;
+      let stop;
+      if (p.x < midpoint.x && p.y < midpoint.y) {
+          //upper left, empty lower right
+          start = HALF_PI;
+          stop = 0;
+      } else if (p.x >= midpoint.x && p.y < midpoint.y) {
+          //upper right, empty lower left
+          start = PI;
+          stop = HALF_PI;
+      } else if (p.x < midpoint.x && p.y >= midpoint.y) {
+          //lower left, empty upper right
+          start = 0;
+          stop = HALF_PI + PI;
+      } else { 
+        // lower right, empty upper left
+          start = -HALF_PI;
+          stop = PI;
+      }
+      
+      // For each leaf, find a spot around the point to draw it
+      for (let i = 0; i < numLeaves; i++) {
+        let r = random(20000 / p.y, 40000 / p.y);
+        let w = random(leafWidth-1,leafWidth+1)
+        let h = random(leafWidth-1,leafWidth+1)
+        
+        
+        let angle = random(start, stop);
+        let x = p.x + (cos(angle) * random(r, r));
+        let _y = p.y + (sin(angle) * random(r, r));
+        let y_aboveBottom = _y
+        let y_belowBottom = height-bottom+random(0,10); // This will fill the area below the ground with Fallen leaves
+        let y = _y > (height-bottom) ? y_belowBottom : y_aboveBottom; //If y is below bottom (ground), set to bottom with some variance. This will be fallen leaves
+        
+        if (debug) {
+          fill("Red")
+          stroke("green")
+          arc(p.x, p.y, r, r, start, stop )
+        }
+
+        // push();
+        // translate(p.x, p.y);
+        // let angleToCenter = atan2(y-p.y, x-p.x); //angle toward the point
+        // pop();
+        
+        if (debug) {
+          fill("blue")
+          circle(x,y,w)
+        }
+        
+        if (angle > start || angle < stop) {
+          // If the angle is outside the arc, skip pushing this leaf
+          leaves.push({
+            x, y, w, h, 
+            start: angle - HALF_PI, 
+            stop: angle + HALF_PI
+          })
+        }
+      }
+    })
+
     return leaves;
+  }
+
+  drawLeaves() {
+    stroke("black");
+    strokeWeight(1);
+    this.leaves.forEach( ({x, y, w, h, start, stop}) => {
+      let fills = [
+        // 'white',
+        color(25, 70, 50),  // Orange
+        color(35, 80, 60),  // Yellow
+        color(15, 60, 40),  // Brown
+        color(45, 90, 70),  // Light Yellow
+        color(5, 70, 50),   // Red
+        color(5, 70, 50)    // Red
+      ];
+      
+      noFill();
+      if ( random([0,1,1]) ) fill(fills[random([0,1,1,2,2,3,3,4,4])])
+      arc(x, y, w, h, start, stop);
+    })
+    noFill();
   }
 
   drawBlob(x, y, r) {
@@ -205,83 +292,57 @@ class Tree {
     endShape(CLOSE);
   }
 
-  drawLeaves() {
-    let {startPoint, treeHeight} = this;
-    
-    stroke(0);
-    strokeWeight(1);
-    fill("lightblue")
-    this.drawBlob(width / 2, height / 2, 150); // Center of canvas, radius 150
-
-    // Draw everything within a push-pop block to apply rotation to this block only
-    stroke("black");
-    strokeWeight(1);
-    push();
-    translate(startPoint.x, startPoint.y-(bottom/2)-(treeHeight));
-    rotate(radians(-90));
-
-    this.leaves.forEach( ({x, y, w, h, start, stop}) => {
-      fill(random([
-        color(44, 59, 77), 
-        color(35, 45, 47),
-        color(19, 66, 66),
-        color(86, 38, 55)
-      ]))
-      arc(x, y, w, h, start, stop);
-    })
-    
-    pop();
-  }
-
-  drawTree(){
-    //Draw Tree Branches
-    this.lines.forEach(l => {
-      let {startPoint, controlPoints, endPoint} = l
-
-      //Set Styles
-      strokeWeight(1);
-      noFill()
-
-      //Style the line
-      beginShape();
-      vertex(startPoint.x, startPoint.y)
-      bezierVertex(
-        controlPoints[0].x, controlPoints[0].y,
-        controlPoints[1].x, controlPoints[1].y,
-        endPoint.x, endPoint.y
-      )
-      endShape();
-      
-      if(drawControls){
-        //Draw Anchor Points
-        stroke("black");
-        strokeWeight(5);
-        point(startPoint.x, startPoint.y)
-        point(endPoint.x, endPoint.y)
-        
-        //Draw Control Points for Reference
-        stroke("red");
-        strokeWeight(5);
-        controlPoints.forEach(p => {
-          point(p.x, p.y)
-        })
-      
-        //Connect Control Points to Anchor Points
-        stroke("red")
-        strokeWeight(1);
-        line(startPoint.x, startPoint.y, controlPoints[0].x, controlPoints[0].y)
-        line(endPoint.x, endPoint.y, controlPoints[1].x, controlPoints[1].y)
-      }
-    })
-    
-    //Unset Styles
-    noStroke();
-    noFill();
-  }
-
   clear() {
     this.lines = []
     this.leaves = []
+  }
+}
+
+function drawBaseLine(xStart, y, xEnd){
+  let x = xStart;
+  stroke(5, 42, 12);
+  strokeWeight(1);
+  noFill();
+  
+  while (x < xEnd){
+    let tickLength;
+    let tickBump = random(-4, 0);
+    let tickType = random(["long", "short", "long", "short", "space"]);
+
+    if(tickType === "long"){
+      tickLength = random(10, 25);
+      beginShape();
+      vertex(x, y, 0);
+      let x2 = x;
+      let y2 = y;
+      let cx1 = x + tickLength / 2;
+      let cy1 = y + tickBump;
+      let cx2 = x + tickLength;
+      let cy2 = y;
+      bezierVertex(x2, y2, cx1, cy1, cx2, cy2);
+      endShape();
+    }
+    else if(tickType === "short"){
+      tickLength = random(3, 10);
+      beginShape();
+      vertex(x, y, 0);
+      let x2 = x;
+      let y2 = y;
+      let cx1 = x + tickLength / 2;
+      let cy1 = y + tickBump;
+      let cx2 = x + tickLength;
+      let cy2 = y;
+      bezierVertex(x2, y2, cx1, cy1, cx2, cy2);
+      endShape();
+    }
+    else if(tickType === "space"){
+      tickLength = random(5,25)
+    } 
+    else {
+      console.error("no such line type")
+    }
+
+    x += tickLength;
   }
 }
 
