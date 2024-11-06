@@ -66,9 +66,9 @@ function draw() {
    *      - The idea behind arcs to avoid too much clutter in the center
    */
   let leafWidth = random(4, 5);
-  let rowSize = 50; //x points will drawn randominly in each row. rows increment up by this amount
+  let rowSize = 20; //x points will drawn randominly in each row. rows increment up by this amount
   let numPointsPerRow = random(8,12);
-  let numLeavesPerPoint = random(15, 30); // # of leaves around each leaf point
+  let numLeavesPerPoint = random(40, 60); // # of leaves around each leaf point
    /**
    * Trunks:
    *  1. Tree Trunks are just random bezier lines
@@ -125,7 +125,7 @@ class TreeBatch {
     for (let j = 0; j < numTrunks; j++) {
       let lines = [];
       let startPoint = {
-        x: random(50, width-50),
+        x: random(100, width-100),
         y: height-bottom
       };
       for (let i = 0; i < numLinesPerTrunk; i++) {
@@ -197,19 +197,20 @@ class TreeBatch {
         }
         if (p.y >= treeBatchHeight) row.push(p); // dont push points that exceed the height. Remember, lower numbers for y are higher on canvas
       }
+
+      numPointsPerRow -= 1
+
       // Find the point with the smallest and largest x value in the row
       let minPoint = row.reduce((min, p) => p.x < min.x ? p : min, row[0]);
       if (minPoint) minPoint.isLeftMost = true;
       let maxPoint = row.reduce((max, p) => p.x > max.x ? p : max, row[0]);
       if (maxPoint) maxPoint.isRightMost = true;
 
-      console.log('Min Point:', minPoint);
-      console.log('Max Point:', maxPoint);
-
       //Push array or points in points array
       points.push(row)
-      curr_y += rowSize
+
       //Increment min/max x, while making sure we dont exceed midpoint. Otherwise, you will just start an inverted triange shape and end up with an hour glass
+      curr_y += rowSize
       min_x += min_x > width/2 ? 0 : random(-50, 100)
       max_x += max_x < width/2 ? 0 : random(-100, 50)
     }
@@ -310,6 +311,11 @@ class TreeBatch {
             stop: angle + HALF_PI
           })
         }
+        
+        //Decrement numLeavesPerPoint so that upper rows have few leaves, min 5
+        numLeavesPerPoint = numLeavesPerPoint > 5 
+          ? numLeavesPerPoint - 1 
+          : 5
       })
     })
 
