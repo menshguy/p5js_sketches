@@ -4,6 +4,7 @@ let drawControls = false;
 let img;
 let trees =  [];
 let debug = false;
+let fallColorFills;
 
 function preload() {
   // img = loadImage('../textures/paper_smooth.jpg');
@@ -11,6 +12,8 @@ function preload() {
 }
 
 function setup() {
+  colorMode(HSL);
+
   // Calc distance from canvas to top of screen
   let container = document.getElementById("canvas-container")
   let rect = container.getBoundingClientRect();
@@ -23,11 +26,31 @@ function setup() {
   ch = 600;
   let canvas = createCanvas(cw, ch);
   canvas.parent(container);
+
+  fallColorFills = [
+    // 'white',
+    color(25, 70, 50),  // Orange
+    color(35, 80, 60),  // Yellow
+    color(15, 60, 40),  // Brown
+    color(45, 90, 70),  // Light Yellow
+    color(5, 70, 50),   // Red
+    color(5, 70, 50)    // Red
+  ];
+  lightFallColorFills = [
+    // 'white',
+    color(45, 90, 70),  // Light Yellow
+    color(45, 90, 80),  // Light Yellow
+    color(45, 90, 75),  // Light Yellow
+    color(45, 90, 73),  // Light Yellow
+    color(45, 90, 78),  // Light Yellow
+    color(5, 70, 80),   // Red
+    color(5, 70, 90)    // Red
+  ];
 }
 
 function draw() {
-  colorMode(HSL);
-  background(38, 92, 67)
+  // background(38, 92, 67)
+  background(180, 70, 90)
   noLoop();
 
   let center = {x:cw/2, y:ch-bottom}
@@ -35,12 +58,12 @@ function draw() {
   let levelSize = 5;
   let leafWidth = random(4, 5);
   let numLeafPoints = random(5,10);
-  let numLeaves = random(5, 10); // # of leaves around each leaf point
-  let numLines = random(4,8);
+  let numLeavesPerPoint = random(10, 15); // # of leaves around each leaf point
   let numTrunks = random(8, 15);
+  let numLinesPerTrunk = random(4,8);
   let trunkHeight = random(25,50);
   let trunkWidth = random(25,50)
-  let tree = new Tree({maxHeight, numTrunks, numLines, leafWidth, numLeafPoints, numLeaves, levelSize, center, trunkHeight, trunkWidth})
+  let tree = new Tree({maxHeight, numTrunks, numLinesPerTrunk, leafWidth, numLeafPoints, numLeavesPerPoint, levelSize, center, trunkHeight, trunkWidth})
   
   //Draw Trucks, Leaves, Baseline
   tree.drawTrunks();
@@ -49,24 +72,26 @@ function draw() {
 
   //Draw Texture
   blendMode(MULTIPLY);
+  image(tree.circleBuffer, 0, 0);
   image(textureImg, 0, 0, cw, ch);
   blendMode(BLEND); 
 }
 
 class Tree {
-  constructor({maxHeight, numTrunks, numLines, leafWidth, numLeafPoints, numLeaves, levelSize, center, trunkHeight, trunkWidth}){
-    Object.assign(this, { maxHeight, numTrunks, numLines, leafWidth, numLeafPoints, numLeaves, levelSize, center, trunkHeight, trunkWidth });
+  constructor({maxHeight, numTrunks, numLinesPerTrunk, leafWidth, numLeafPoints, numLeavesPerPoint, levelSize, center, trunkHeight, trunkWidth}){
+    Object.assign(this, { maxHeight, numTrunks, numLinesPerTrunk, leafWidth, numLeafPoints, numLeavesPerPoint, levelSize, center, trunkHeight, trunkWidth });
     this.midpoint = {x: center.x ,y: center.y - (maxHeight/2)}
     if (debug){
       fill("red")
       circle(this.midpoint.x,this.midpoint.y,20)
     }
+    this.circleBuffer = createGraphics(cw, ch);
     this.trunks = this.generateTrunks();
     this.leaves = this.generateLeaves();
   }
 
   generateTrunks() {
-    let {numTrunks, numLines, trunkHeight, trunkWidth} = this;
+    let {numTrunks, numLinesPerTrunk, trunkHeight, trunkWidth} = this;
     
     let trunks = []
     for (let j = 0; j < numTrunks; j++) {
@@ -75,7 +100,7 @@ class Tree {
         x: random(50, width-50),
         y: height-bottom
       };
-      for (let i = 0; i < numLines; i++) {
+      for (let i = 0; i < numLinesPerTrunk; i++) {
         let endPoint = {
           x: random(startPoint.x-(trunkWidth/2), startPoint.x+(trunkWidth/2)), 
           y: random((startPoint.y-trunkHeight) + (trunkHeight/2), startPoint.y-bottom-trunkHeight)
@@ -118,14 +143,14 @@ class Tree {
         endShape();
       })
     })
-    
+
     //Unset Styles
     noStroke();
     noFill();
   }
 
   generateLeaves() {
-    let {maxHeight, midpoint, leafWidth, numLeafPoints, numLeaves, levelSize} = this;
+    let {maxHeight, midpoint, leafWidth, numLeafPoints, numLeavesPerPoint, levelSize} = this;
     let points = [];
     let leaves = [];
     let numLevels = height/levelSize;
@@ -152,6 +177,9 @@ class Tree {
 
     // Create leaves that surround and face each point
     points.forEach(p => {
+      let r = random(20000 / p.y, 40000 / p.y);
+      let start;
+      let stop;
       
       if (debug) {
         fill("red");
@@ -159,33 +187,33 @@ class Tree {
       }
 
       // Determine the quadrant of the point
-      let start;
-      let stop;
       if (p.x < midpoint.x && p.y < midpoint.y) {
-          //upper left, empty lower right
-          start = HALF_PI;
-          stop = 0;
+        //upper left, empty lower right
+        start = HALF_PI;
+        stop = 0;
       } else if (p.x >= midpoint.x && p.y < midpoint.y) {
-          //upper right, empty lower left
-          start = PI;
-          stop = HALF_PI;
+        //upper right, empty lower left
+        start = PI;
+        stop = HALF_PI;
       } else if (p.x < midpoint.x && p.y >= midpoint.y) {
-          //lower left, empty upper right
-          start = 0;
-          stop = HALF_PI + PI;
+        //lower left, empty upper right
+        start = 0;
+        stop = HALF_PI + PI;
       } else { 
         // lower right, empty upper left
-          start = -HALF_PI;
-          stop = PI;
+        start = -HALF_PI;
+        stop = PI;
       }
+
+      this.circleBuffer.fill(lightFallColorFills[3]);
+      this.circleBuffer.noStroke();
+      // this.circleBuffer.arc(p.x, p.y, r, r, start, stop);
+      this.circleBuffer.circle(p.x, p.y, r);
       
       // For each leaf, find a spot around the point to draw it
-      for (let i = 0; i < numLeaves; i++) {
-        let r = random(20000 / p.y, 40000 / p.y);
+      for (let i = 0; i < numLeavesPerPoint; i++) {
         let w = random(leafWidth-1,leafWidth+1)
         let h = random(leafWidth-1,leafWidth+1)
-        
-        
         let angle = random(start, stop);
         let x = p.x + (cos(angle) * random(r, r));
         let _y = p.y + (sin(angle) * random(r, r));
@@ -227,18 +255,8 @@ class Tree {
     stroke("black");
     strokeWeight(1);
     this.leaves.forEach( ({x, y, w, h, start, stop}) => {
-      let fills = [
-        // 'white',
-        color(25, 70, 50),  // Orange
-        color(35, 80, 60),  // Yellow
-        color(15, 60, 40),  // Brown
-        color(45, 90, 70),  // Light Yellow
-        color(5, 70, 50),   // Red
-        color(5, 70, 50)    // Red
-      ];
-      
       noFill();
-      if ( random([0,1,1]) ) fill(fills[random([0,1,1,2,2,3,3,4,4])])
+      if ( random([0,1,1]) ) fill(fallColorFills[random([0,1,1,2,2,3,3,4,4])])
       arc(x, y, w, h, start, stop);
     })
     noFill();
