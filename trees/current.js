@@ -84,11 +84,26 @@ function setup() {
     ]
   }
 
+  let w = width/10
+  let rowWidthIncrementSizes = {
+    summer: () => random(-20, 20), 
+    winter: () => random(-w, w*1.5), 
+    spring: () => random(-w, w*1.5), 
+    fall: () => random(-w, w*1.5)
+  }
+
   let forestHeights = {
     summer: random(ch/2, ch),
     winter: random(50, 150),
     fall: random(ch/4, ch-ch/7),
     spring: random(ch/4, ch-ch/10),
+  }
+  
+  let trunkHeights = {
+    summer: random(100, forestHeights["summer"]),
+    winter: random(100, ch/2),
+    fall: random(forestHeights["fall"] / 2, forestHeights["fall"] + 50),
+    spring: random(forestHeights["spring"] / 2, forestHeights["spring"] + 50),
   }
   
   /** General Settings */
@@ -102,8 +117,8 @@ function setup() {
    */
   let numTrunks = random(15, 20);
   let numLinesPerTrunk = random(4,8);
-  let trunkHeight = random(100, forestHeight + 20);
-  let trunkWidth = random(width/12,width/10)
+  let trunkHeight = trunkHeights[season];
+  let trunkWidth = random(width/10,width/8)
   /** Leaves:
    *  1. Points are draw randomly across each "row"
    *  2. Rows increment up by rowHeight until they reach forestHeight
@@ -113,9 +128,9 @@ function setup() {
   */
   let pointBoundaryRadius;
   if (season === 'spring' || season === 'fall') {
-    pointBoundaryRadius = {min: 50, max: 150}; // Example values for spring
+    pointBoundaryRadius = {min: 100, max: 250}; // Example values for spring
   } else if (season === 'summer') {
-    pointBoundaryRadius = {min: 70, max: 220}; // Example values for fall
+    pointBoundaryRadius = {min: 100, max: 220}; // Example values for fall
   } else if (season === 'winter') {
     pointBoundaryRadius = {min: 150, max: 200}; // Example values for winter
   }
@@ -136,7 +151,7 @@ function setup() {
   } else if (season === 'summer') {
     numLeavesPerPoint = random(1200, 1500); // Example values for fall
   } else if (season === 'winter') {
-    numLeavesPerPoint = random(1, 5); // Example values for winter
+    numLeavesPerPoint = random(3, 5); // Example values for winter
   }
   let leafWidth = season === "summer" ? random(4, 4) : random(2, 3);
   let rowHeight = season === "fall" ? 30 : 20; //x points will drawn randominly in each row. rows increment up by this amount
@@ -146,7 +161,7 @@ function setup() {
   forest = new Forest({
     forestHeight, numTrunks, numLinesPerTrunk, leafWidth, numPointsPerRow, 
     numLeavesPerPoint, rowHeight, center, trunkHeight, trunkWidth, pointsStart,
-    pointBoundaryRadius, fills
+    pointBoundaryRadius, fills, rowWidthIncrementSizes
   })
 }
 
@@ -200,12 +215,12 @@ class Forest {
   constructor({
     forestHeight, numTrunks, numLinesPerTrunk, leafWidth, numPointsPerRow, 
     numLeavesPerPoint, rowHeight, center, trunkHeight, trunkWidth, pointsStart,
-    pointBoundaryRadius, fills
+    pointBoundaryRadius, fills, rowWidthIncrementSizes
   }){
     Object.assign(this, {
       forestHeight, numTrunks, numLinesPerTrunk, leafWidth, numPointsPerRow, 
       numLeavesPerPoint, rowHeight, center, trunkHeight, trunkWidth, pointsStart,
-      pointBoundaryRadius, fills
+      pointBoundaryRadius, fills, rowWidthIncrementSizes
     });
     this.fills = fills;
     this.midpoint = {x: center.x ,y: center.y - forestHeight/2}
@@ -256,7 +271,7 @@ class Forest {
   }
 
   generatePoints(){
-    let {forestHeight, numPointsPerRow, rowHeight, pointsStart, midpoint:m} = this;
+    let {forestHeight, numPointsPerRow, rowHeight, pointsStart, rowWidthIncrementSizes, midpoint:m} = this;
     let points = [];
     let min_x = width/10;
     let max_x = width - (width/10);
@@ -279,26 +294,12 @@ class Forest {
         }
       }
 
-      // Find the point with the smallest and largest x value in the row
-      // let minPoint = row.reduce((min, p) => p.x < min.x ? p : min, row[0]);
-      // if (minPoint) minPoint.isLeftMost = true;
-      // let maxPoint = row.reduce((max, p) => p.x > max.x ? p : max, row[0]);
-      // if (maxPoint) maxPoint.isRightMost = true;
-
       //Push array or points in points array
       points.push(row)
 
       //Increment min/max x, while making sure we dont exceed midpoint. Otherwise, you will just start an inverted triange shape and end up with an hour glass
-      let w = width/10
-      let increments = {
-        summer: () => random(-20, 20), 
-        winter: () => random(-w, w*1.5), 
-        spring: () => random(-w, w*1.5), 
-        fall: () => random(-w, w*1.5)
-      }
-      // let increments = {summer:, winter, spring, fall:}
-      min_x += min_x > width/2 ? 0 : increments[season]();
-      max_x += max_x < width/2 ? 0 : increments[season]();
+      min_x += min_x > width/2 ? 0 : rowWidthIncrementSizes[season]();
+      max_x += max_x < width/2 ? 0 : rowWidthIncrementSizes[season]();
     }
           
     return points;
@@ -430,12 +431,6 @@ function drawToBuffer(circleBuffer, {x, y, r}, fills) {
 
   circleBuffer.noStroke();
   circleBuffer.fill(fills[random([3])]);
-  
-  // if (isLeftMost || isRightMost) {
-  //   circleBuffer.stroke(0);
-  // } else {
-  //   circleBuffer.noStroke();
-  // }
   circleBuffer.circle(x, y, r);
   circleBuffer.noFill();
 }
