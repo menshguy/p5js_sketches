@@ -5,8 +5,7 @@ let img;
 let trees = [];
 let debug = false;
 let fallColorFills;
-let forest;
-let season;
+let lightFallColorFills;
 
 function preload() {
   // img = loadImage('../textures/paper_smooth.jpg');
@@ -28,75 +27,42 @@ function setup() {
   ch = 600;
   let canvas = createCanvas(cw, ch);
   canvas.parent(container);
-  
-  colors = {
-    winter: [
-      'white',
-      color(200, 10, 90),  // Light Blue
-      color(210, 20, 80),  // Medium Blue
-      color(220, 30, 70),  // Dark Blue
-      color(230, 40, 60),  // Grayish Blue
-      color(240, 50, 50),  // Steel Blue
-      color(250, 60, 40),  // Slate Blue
-      color(260, 70, 30),  // Deep Blue
-      color(270, 80, 20),  // Navy Blue
-      color(280, 90, 10),  // Midnight Blue
-      color(290, 100, 5),  // Blackish Blue
-    ],
-    fall: [
-      color(5, 70, 28),   // Red
-      color(25, 70, 20),  // Orange
-      color(35, 80, 30),  // Yellow
-      color(15, 60, 25),  // Brown
-      color(45, 90, 23),  // Light Yellow
-      color(5, 70, 28),   // Red
-      color(25, 70, 50),  // Orange
-      color(35, 80, 60),  // Yellow
-      color(15, 60, 50),  // Brown
-      color(45, 90, 50),  // Light Yellow
-      color(5, 70, 50),   // Red
-    ], 
-    spring: [
-      'white',
-      color(25, 70, 30),  // Orange
-      color(35, 80, 40),  // Yellow
-      color(15, 60, 35),  // Brown
-      color(45, 90, 33),  // Light Yellow
-      color(5, 70, 38),   // Red
-      color(25, 70, 60),  // Orange
-      color(35, 80, 70),  // Yellow
-      color(15, 60, 60),  // Brown
-      color(45, 90, 60),  // Light Yellow
-      color(5, 70, 60),   // Red
-    ], 
-    summer: [
-      color(82, 90, 75),  // Light Yellow
-      color(120, 60, 40),  // Dark Green
-      color(130, 70, 50),  // Medium Green
-      color(140, 80, 60),  // Light Green
-      color(110, 50, 30),  // Olive Green
-      color(150, 90, 70),  // Lime Green
-      color(125, 65, 45),  // Forest Green
-      color(135, 75, 55),  // Grass Green
-      color(145, 85, 65),  // Pale Green
-      color(115, 55, 35),  // Moss Green
-      color(155, 95, 75),  // Bright Green
-    ]
-  }
 
-  let forestHeights = {
-    summer: random(ch/3, ch),
-    winter: random(50, 150),
-    fall: random(ch/4, ch-ch/3),
-    spring: random(ch/4, ch-ch/3),
-  }
-  
+  fallColorFills = [
+    'white',
+    color(25, 70, 30),  // Orange
+    color(35, 80, 40),  // Yellow
+    color(15, 60, 35),  // Brown
+    color(45, 90, 33),  // Light Yellow
+    color(5, 70, 38),   // Red
+    color(25, 70, 60),  // Orange
+    color(35, 80, 70),  // Yellow
+    color(15, 60, 60),  // Brown
+    color(45, 90, 60),  // Light Yellow
+    color(5, 70, 60),   // Red
+  ];
+  lightFallColorFills = [
+    // 'white',
+    color(45, 90, 70),  // Light Yellow
+    color(45, 90, 80),  // Light Yellow
+    color(45, 90, 75),  // Light Yellow
+    color(45, 90, 73),  // Light Yellow
+    color(45, 90, 78),  // Light Yellow
+    color(5, 70, 80),   // Red
+    color(5, 70, 90)    // Red
+  ];
+}
+
+function draw() {
+  // background(38, 92, 67)
+  // background(180, 70, 90) //light blue
+  // background(330, 34, 96) //pink
+  background(43, 62, 90) //orange
+  noLoop();
+
   /** General Settings */
-  season = random(['spring', 'fall', 'winter', 'summer'])
   let center = {x:cw/2, y:ch-bottom};
-  let forestHeight = forestHeights[season];
-  let fills = colors[season];
-  console.log("season", season)
+  let forestHeight = random(ch/4,ch-ch/3);
   /** Trunks:
    *   1. Tree Trunks are just random bezier lines
    */
@@ -111,83 +77,41 @@ function setup() {
    *      - The arcs are essentially openface 3/4 circles that face the center of the tree
    *      - The idea behind arcs to avoid too much clutter in the center
   */
-  let pointBoundaryRadius;
-  if (season === 'spring' || season === 'fall') {
-    pointBoundaryRadius = {min: 50, max: 150}; // Example values for spring
-  } else if (season === 'summer') {
-    pointBoundaryRadius = {min: 70, max: 220}; // Example values for fall
-  } else if (season === 'winter') {
-    pointBoundaryRadius = {min: 150, max: 200}; // Example values for winter
-  }
+  let pointBoundaryRadius = {min: 70, max:200};
   let pointsStart = height - bottom - pointBoundaryRadius.min;
-  
-  let numPointsPerRow;
-  if (season === 'spring' || season === 'fall') {
-    numPointsPerRow = random(width/100 , width/60); // Example values for spring
-  } else if (season === 'summer') {
-    numPointsPerRow = random(width/100 , width/50); // Example values for fall
-  } else if (season === 'winter') {
-    numPointsPerRow = random(1, 3); // Example values for winter
-  }
-  
-  let numLeavesPerPoint;
-  if (season === 'spring' || season === 'fall') {
-    numLeavesPerPoint = random(1000, 1200); // Example values for spring
-  } else if (season === 'summer') {
-    numLeavesPerPoint = random(1200, 1500); // Example values for fall
-  } else if (season === 'winter') {
-    numLeavesPerPoint = random(1, 5); // Example values for winter
-  }
-  let leafWidth = season === "summer" ? random(4, 4) : random(2, 3);
-  let rowHeight = season === "fall" ? 30 : 20; //x points will drawn randominly in each row. rows increment up by this amount
+  let numPointsPerRow = random(width/100 , width/60);
+  let numLeavesPerPoint = random(1000, 1200); // # of leaves around each leaf point
+  let leafWidth = random(2, 3);
+  let rowHeight = 30; //x points will drawn randominly in each row. rows increment up by this amount
    
 
   /** Create Tree */
-  forest = new Forest({
+  let forest = new Forest({
     forestHeight, numTrunks, numLinesPerTrunk, leafWidth, numPointsPerRow, 
     numLeavesPerPoint, rowHeight, center, trunkHeight, trunkWidth, pointsStart,
-    pointBoundaryRadius, fills
+    pointBoundaryRadius
   })
-}
-
-function draw() {
-  noLoop();
-
-  if (season === "fall") {
-    background(39, 26, 73) //brown
-  } 
-  else if (season === "spring") {
-    background(43, 62, 90) //orange
-  }
-  else if (season === "winter") {
-    background(208,18,83) //deep blue
-  }
-  else if (season === "summer") {
-    background(56,85,91) //light yellow
-  }
   
   /** Create Buffers */
   let circleBuffer = createGraphics(cw, ch)
   
   //Draw Ground Fill
-  let groundFill = season === "winter" ? "white" : forest.fills[4]
-  if (season === "winter") {
-    fill(groundFill)
-    noStroke()
-    rect(0, height-bottom, width, height-bottom);
-  }
+  let groundFill = fallColorFills[3]
+  // fill(groundFill)
+  // noStroke()
+  // rect(0, height-bottom, width, height-bottom);
   
   //Draw Ground Squiggly (on top of Ground Fill & trees)
   drawGroundLine(25, ch-bottom, cw-25, groundFill)
   
   //Draw Trees in order
-  forest.trunks.forEach(trunk => drawTrunk(trunk, forest.trunkHeight, forest.trunkWidth));
+  forest.trunks.forEach(trunk => drawTrunk(trunk, trunkHeight, trunkWidth));
   // forest.circles.forEach(c => {
-  //   drawToBuffer(circleBuffer, c, fills)
+  //   drawToBuffer(circleBuffer, c)
   // });
   // drawCircleBuffer(circleBuffer)
   forest.leaves.forEach(row => row.forEach(l => {
-    drawLeaf(l, 0.2, random(forest.fills))
+    drawLeaf(l, 0.2, random(fallColorFills))
   }));
   
   //Draw Texture
@@ -200,14 +124,13 @@ class Forest {
   constructor({
     forestHeight, numTrunks, numLinesPerTrunk, leafWidth, numPointsPerRow, 
     numLeavesPerPoint, rowHeight, center, trunkHeight, trunkWidth, pointsStart,
-    pointBoundaryRadius, fills
+    pointBoundaryRadius
   }){
     Object.assign(this, {
       forestHeight, numTrunks, numLinesPerTrunk, leafWidth, numPointsPerRow, 
       numLeavesPerPoint, rowHeight, center, trunkHeight, trunkWidth, pointsStart,
-      pointBoundaryRadius, fills
+      pointBoundaryRadius 
     });
-    this.fills = fills;
     this.midpoint = {x: center.x ,y: center.y - forestHeight/2}
     this.trunks = this.generateTrunks();
     this.points = this.generatePoints();
@@ -289,16 +212,8 @@ class Forest {
       points.push(row)
 
       //Increment min/max x, while making sure we dont exceed midpoint. Otherwise, you will just start an inverted triange shape and end up with an hour glass
-      let w = width/10
-      let increments = {
-        summer: () => 0, 
-        winter: () => random(-w, w*1.5), 
-        spring: () => random(-w, w*1.5), 
-        fall: () => random(-w, w*1.5)
-      }
-      // let increments = {summer:, winter, spring, fall:}
-      min_x += min_x > width/2 ? 0 : increments[season]();
-      max_x += max_x < width/2 ? 0 : increments[season]();
+      min_x += min_x > width/2 ? 0 : random(-(width/10), (width/10)*1.5)
+      max_x += max_x < width/2 ? 0 : random(-(width/10), (width/10)*1.5)
     }
           
     return points;
@@ -365,9 +280,7 @@ class Forest {
           let isFallenLeaf = py + (sin(angle) * r) >= (height-bottom) //If py is below the ground, we flag it so we can create fallen leaves later
           let x = px + (cos(angle) * r);
           let y = isFallenLeaf //If y is below bottom (ground), set to y to bottom with some variance to draw "fallen leaves"
-            ? season === "summer"
-              ? ch + 100 // get it off the screen! No fallen leaves in summer
-              : height-bottom+random(0,15) 
+            ? height-bottom+random(0,15) 
             : py + (sin(angle) * r);
           angle = isFallenLeaf ? PI : angle; //Angle fallen leaves horizonally
             
@@ -426,10 +339,10 @@ function drawLeaf({x, y, w, h, angle, start, stop}, p, fill_c) {
   }
 }
 
-function drawToBuffer(circleBuffer, {x, y, r}, fills) {
+function drawToBuffer(circleBuffer, {x, y, r}) {
 
   circleBuffer.noStroke();
-  circleBuffer.fill(fills[random([3])]);
+  circleBuffer.fill(lightFallColorFills[random([3])]);
   
   // if (isLeftMost || isRightMost) {
   //   circleBuffer.stroke(0);
