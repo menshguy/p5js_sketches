@@ -68,17 +68,18 @@ function draw() {
    */
   let numTrunks = random(15, 20);
   let numLinesPerTrunk = random(4,8);
-  let trunkHeight = random(ch/10,ch/5);
-  let trunkWidth = random(30,50)
+  let trunkHeight = random(100, forestHeight + 20);
+  let trunkWidth = random(width/12,width/10)
   /** Leaves:
    *  1. Points are draw randomly across each "row"
    *  2. Rows increment up by rowHeight until they reach forestHeight
    *  3. Leaves are then drawn randomly around each point, avoiding gaps in the "arcs"
    *      - The arcs are essentially openface 3/4 circles that face the center of the tree
    *      - The idea behind arcs to avoid too much clutter in the center
-   */
-  let pointsStart = height - bottom - trunkHeight/2;
-  let numPointsPerRow = random(15,25);
+  */
+  let pointBoundaryRadius = {min: 70, max:200};
+  let pointsStart = height - bottom - pointBoundaryRadius.min;
+  let numPointsPerRow = random(width/100 , width/60);
   let numLeavesPerPoint = random(1000, 1200); // # of leaves around each leaf point
   let leafWidth = random(2, 3);
   let rowHeight = 30; //x points will drawn randominly in each row. rows increment up by this amount
@@ -87,7 +88,8 @@ function draw() {
   /** Create Tree */
   let forest = new Forest({
     forestHeight, numTrunks, numLinesPerTrunk, leafWidth, numPointsPerRow, 
-    numLeavesPerPoint, rowHeight, center, trunkHeight, trunkWidth, pointsStart
+    numLeavesPerPoint, rowHeight, center, trunkHeight, trunkWidth, pointsStart,
+    pointBoundaryRadius
   })
   
   /** Create Buffers */
@@ -109,7 +111,7 @@ function draw() {
   // });
   // drawCircleBuffer(circleBuffer)
   forest.leaves.forEach(row => row.forEach(l => {
-    drawLeaf(l, 0.1, random(fallColorFills))
+    drawLeaf(l, 0.2, random(fallColorFills))
   }));
   
   //Draw Texture
@@ -121,11 +123,13 @@ function draw() {
 class Forest {
   constructor({
     forestHeight, numTrunks, numLinesPerTrunk, leafWidth, numPointsPerRow, 
-    numLeavesPerPoint, rowHeight, center, trunkHeight, trunkWidth, pointsStart
+    numLeavesPerPoint, rowHeight, center, trunkHeight, trunkWidth, pointsStart,
+    pointBoundaryRadius
   }){
     Object.assign(this, {
       forestHeight, numTrunks, numLinesPerTrunk, leafWidth, numPointsPerRow, 
-      numLeavesPerPoint, rowHeight, center, trunkHeight, trunkWidth, pointsStart 
+      numLeavesPerPoint, rowHeight, center, trunkHeight, trunkWidth, pointsStart,
+      pointBoundaryRadius 
     });
     this.midpoint = {x: center.x ,y: center.y - forestHeight/2}
     this.trunks = this.generateTrunks();
@@ -216,8 +220,9 @@ class Forest {
   }
 
   generatePointBoundary(px, py, mx, my){
-    let min = this.trunkHeight - (py/10);
-    let max = this.trunkHeight*2 - (py/10);
+    let {pointBoundaryRadius:pbr} = this
+    let min = pbr.min;
+    let max = pbr.max;
     let radius = random(min, max); 
     
     // Calculate the differences in x and y and calc angle us atan2
