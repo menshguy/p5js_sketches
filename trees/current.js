@@ -24,8 +24,8 @@ function setup() {
   // Set width and height to full window
   // cw = windowWidth || 600;
   // ch = (windowHeight - distanceFromTop) || 600;
-  cw = 600;
-  ch = 600;
+  cw = 800;
+  ch = 800;
   let canvas = createCanvas(cw, ch);
   canvas.parent(container);
   
@@ -85,10 +85,10 @@ function setup() {
   }
 
   let forestHeights = {
-    summer: random(ch/3, ch),
+    summer: random(ch/2, ch),
     winter: random(50, 150),
-    fall: random(ch/4, ch-ch/3),
-    spring: random(ch/4, ch-ch/3),
+    fall: random(ch/4, ch-ch/7),
+    spring: random(ch/4, ch-ch/10),
   }
   
   /** General Settings */
@@ -291,7 +291,7 @@ class Forest {
       //Increment min/max x, while making sure we dont exceed midpoint. Otherwise, you will just start an inverted triange shape and end up with an hour glass
       let w = width/10
       let increments = {
-        summer: () => 0, 
+        summer: () => random(-20, 20), 
         winter: () => random(-w, w*1.5), 
         spring: () => random(-w, w*1.5), 
         fall: () => random(-w, w*1.5)
