@@ -23,8 +23,8 @@ function setup() {
   // Set width and height to full window
   // cw = windowWidth || 600;
   // ch = (windowHeight - distanceFromTop) || 600;
-  cw = 600;
-  ch = 600;
+  cw = 800;
+  ch = 800;
   let canvas = createCanvas(cw, ch);
   canvas.parent(container);
 
@@ -55,19 +55,21 @@ function setup() {
 
 function draw() {
   // background(38, 92, 67)
-  background(180, 70, 90)
+  // background(180, 70, 90) //light blue
+  // background(330, 34, 96) //pink
+  background(43, 62, 90) //orange
   noLoop();
 
   /** General Settings */
   let center = {x:cw/2, y:ch-bottom};
-  let forestHeight = random(200,600);
+  let forestHeight = random(ch/4,ch-ch/3);
   /** Trunks:
    *   1. Tree Trunks are just random bezier lines
    */
-  let numTrunks = random(8, 15);
+  let numTrunks = random(15, 20);
   let numLinesPerTrunk = random(4,8);
-  let trunkHeight = random(90,100);
-  let trunkWidth = random(35,75)
+  let trunkHeight = random(ch/10,ch/5);
+  let trunkWidth = random(30,50)
   /** Leaves:
    *  1. Points are draw randomly across each "row"
    *  2. Rows increment up by rowHeight until they reach forestHeight
@@ -76,9 +78,9 @@ function draw() {
    *      - The idea behind arcs to avoid too much clutter in the center
    */
   let pointsStart = height - bottom - trunkHeight/2;
-  let numPointsPerRow = random(10,15);
+  let numPointsPerRow = random(15,25);
   let numLeavesPerPoint = random(1000, 1200); // # of leaves around each leaf point
-  let leafWidth = random(3, 4);
+  let leafWidth = random(2, 3);
   let rowHeight = 30; //x points will drawn randominly in each row. rows increment up by this amount
    
 
@@ -93,11 +95,12 @@ function draw() {
   
   //Draw Ground Fill
   let groundFill = fallColorFills[3]
-  fill(groundFill)
-  rect(0, height-bottom, width, height-bottom);
+  // fill(groundFill)
+  // noStroke()
+  // rect(0, height-bottom, width, height-bottom);
   
   //Draw Ground Squiggly (on top of Ground Fill & trees)
-  drawGroundLine(100, ch-bottom, cw-100, groundFill)
+  drawGroundLine(25, ch-bottom, cw-25, groundFill)
   
   //Draw Trees in order
   forest.trunks.forEach(trunk => drawTrunk(trunk, trunkHeight, trunkWidth));
@@ -213,8 +216,8 @@ class Forest {
   }
 
   generatePointBoundary(px, py, mx, my){
-    let min = width/5 - (py/10);
-    let max = width/4 - (py/10);
+    let min = this.trunkHeight - (py/10);
+    let max = this.trunkHeight*2 - (py/10);
     let radius = random(min, max); 
     
     // Calculate the differences in x and y and calc angle us atan2
@@ -354,37 +357,40 @@ function drawCircleBuffer(circleBuffer){
 function drawTrunk(tree, trunkHeight, trunkWidth){
   let trunkBuffer = createGraphics(cw, ch);
   tree.forEach(line => {
-    let {startPoint, controlPoints, endPoint} = line
+    let {startPoint:s, controlPoints:cps, endPoint:e} = line
 
     //Set Styles
+    trunkBuffer.push()
     trunkBuffer.stroke(145, 77, 5)
     trunkBuffer.strokeWeight(1.5);
     trunkBuffer.noFill()
 
-    //Style the line
+    // -- Curve Style -- //
     trunkBuffer.beginShape();
-    trunkBuffer.vertex(startPoint.x, startPoint.y)
+    trunkBuffer.vertex(s.x, s.y)
     trunkBuffer.bezierVertex(
-      controlPoints[0].x, controlPoints[0].y,
-      controlPoints[1].x, controlPoints[1].y,
-      endPoint.x, endPoint.y
+      cps[0].x, cps[0].y,
+      cps[1].x, cps[1].y,
+      e.x, e.y
     )
     trunkBuffer.endShape();
+
+    // -- Straight Style == //
+    // marker_rect(e.x, e.y, 5, trunkHeight+bottom)
 
     // Erase a circle area
     if (random([0,1])) randomErase();
     
     //Unset Styles
-    trunkBuffer.noStroke();
-    trunkBuffer.noFill();
+    trunkBuffer.pop()
 
     function randomErase(){
       if (!debug) trunkBuffer.fill("red")
       trunkBuffer.noStroke(10)
       if (!debug) trunkBuffer.erase();
       trunkBuffer.circle(
-        startPoint.x+random(-trunkWidth/2, trunkWidth/2), 
-        endPoint.y-trunkHeight/2, 
+        s.x+random(-trunkWidth/2, trunkWidth/2), 
+        e.y-trunkHeight/2, 
         50
       );
       if (!debug) trunkBuffer.noErase();
@@ -397,7 +403,7 @@ function drawTrunk(tree, trunkHeight, trunkWidth){
 function drawGroundLine(xStart, yStart, xEnd, fill_c){
   let x = xStart;
   let y = yStart;
-  stroke(5, 42, 12);
+  stroke(fill_c);
   strokeWeight(1);
   fill_c ? fill(fill_c) : noFill()
   
@@ -441,6 +447,51 @@ function drawGroundLine(xStart, yStart, xEnd, fill_c){
 
     x += tickLength;
   }
+}
+
+function marker_rect (x, y, w, h, fill_c = "white", stroke_c = "black") {
+  
+  stroke(stroke_c)
+  fill(fill_c)
+
+  for (let i = 0; i < 3; i++) {  // Draw multiple lines to make it look rough
+
+    // Right line
+    let yOffset = random(0, 4)
+    line(
+      x + random(-2, 2), 
+      y, 
+      x + random(-2, 2), 
+      h + y
+    );
+
+    let yOffset2 = random(0, 4)
+    line(
+      x + random(-2, 2), 
+      y, 
+      x + random(-2, 2), 
+      h + y
+    );
+    
+    let yOffset3 = random(0, 4)
+    line(
+      x + random(-2, 2), 
+      y, 
+      x + random(-2, 2), 
+      h + y
+    );
+
+    let yOffset4 = random(0, 4)
+    line(
+      x + random(-2, 2), 
+      y, 
+      x + random(-2, 2), 
+      h + y
+    );
+  }
+
+  noStroke()
+  noFill()
 }
 
 function calculateDistance(x1, y1, x2, y2) {
