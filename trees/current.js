@@ -23,8 +23,8 @@ function setup() {
   // Set width and height to full window
   // cw = windowWidth || 600;
   // ch = (windowHeight - distanceFromTop) || 600;
-  cw = 800;
-  ch = 800;
+  cw = 600;
+  ch = 600;
   let canvas = createCanvas(cw, ch);
   canvas.parent(container);
 
@@ -366,8 +366,8 @@ function drawTrunk(tree, trunkHeight, trunkWidth){
 
     //Set Styles
     trunkBuffer.push()
-    trunkBuffer.stroke(145, 77, 5)
-    trunkBuffer.strokeWeight(1.5);
+    trunkBuffer.stroke('black')
+    trunkBuffer.strokeWeight(1);
     trunkBuffer.noFill()
 
     // -- Curve Style -- //
