@@ -2,7 +2,7 @@ let cw, ch;
 let bottom = 50;
 let drawControls = false;
 let img;
-let trees =  [];
+let trees = [];
 let debug = false;
 let fallColorFills;
 let lightFallColorFills;
@@ -56,7 +56,7 @@ function draw() {
 
   /** General Settings */
   let center = {x:cw/2, y:ch-bottom};
-  let treeBatchHeight = height - bottom - random(400,500);
+  let treeBatchHeight = random(400,500);
   /**
    * Leaves:
    *  1. Points are draw randomly across each "row"
@@ -66,8 +66,8 @@ function draw() {
    *      - The idea behind arcs to avoid too much clutter in the center
    */
   let leafWidth = random(4, 5);
-  let rowSize = 20; //x points will drawn randominly in each row. rows increment up by this amount
-  let numPointsPerRow = random(8,12);
+  let rowSize = 30; //x points will drawn randominly in each row. rows increment up by this amount
+  let numPointsPerRow = random(15,20);
   let numLeavesPerPoint = random(40, 60); // # of leaves around each leaf point
    /**
    * Trunks:
@@ -81,41 +81,47 @@ function draw() {
   /** Create Tree */
   let treeBatch = new TreeBatch({treeBatchHeight, numTrunks, numLinesPerTrunk, leafWidth, numPointsPerRow, numLeavesPerPoint, rowSize, center, trunkHeight, trunkWidth})
   
+  /** Create Buffers */
+  let circleBuffer = createGraphics(cw, ch)
+  
   //Draw Ground Fill
   fill(fallColorFills[2])
   rect(0, height-bottom, width, height-bottom);
   
-  //Draw Trees in order
-  treeBatch.drawTrunks();
-  treeBatch.drawLeaves();
-  treeBatch.generateCircleBufferImage();
-
   //Draw Ground Squiggly (on top of Ground Fill & trees)
   drawGroundLine(100, ch-bottom, cw-100)
-
+  
+  //Draw Trees in order
+  treeBatch.trunks.forEach(trunk => drawTrunk(trunk, trunkHeight, trunkWidth));
+  treeBatch.circles.forEach(c => {
+    drawToBuffer(circleBuffer, c)
+  });
+  drawCircleBuffer(circleBuffer)
+  treeBatch.leaves.forEach(row => row.forEach(l => drawLeaf(l)));
+  
   //Draw Texture
   blendMode(MULTIPLY);
   image(textureImg, 0, 0, cw, ch);
-  // treeBatch.circleBuffer.filter(BLUR, 5);
-  image(treeBatch.circleBuffer, 0, 0);
   blendMode(BLEND); 
 }
 
 class TreeBatch {
   constructor({treeBatchHeight, numTrunks, numLinesPerTrunk, leafWidth, numPointsPerRow, numLeavesPerPoint, rowSize, center, trunkHeight, trunkWidth}){
     Object.assign(this, { treeBatchHeight, numTrunks, numLinesPerTrunk, leafWidth, numPointsPerRow, numLeavesPerPoint, rowSize, center, trunkHeight, trunkWidth });
-    this.midpoint = {x: center.x ,y: center.y - (center.y - treeBatchHeight)/2}
+    this.midpoint = {x: center.x ,y: center.y - treeBatchHeight/2}
     if (debug){
+      fill("yellow")
+      circle(this.midpoint.x,height - bottom - treeBatchHeight,20)
+      fill("pink")
+      circle(this.midpoint.x,this.midpoint.y,20)
       fill("red")
       circle(this.center.x,this.center.y,20)
-      circle(this.midpoint.x,treeBatchHeight,20)
-      circle(this.midpoint.x,this.midpoint.y,20)
     }
-    this.circleBuffer = createGraphics(cw, ch);
+    // this.circleBuffer = createGraphics(cw, ch);
     this.trunks = this.generateTrunks();
-    let {leaves, circles} = this.generateLeavesAndCircles();
-    this.leaves = leaves;
-    this.circles = circles;
+    this.points = this.generatePoints();
+    this.circles = this.generateCircles();
+    this.leaves = this.generateLeaves();
   }
 
   generateTrunks() {
@@ -149,56 +155,31 @@ class TreeBatch {
     return trunks;
   }
 
-  drawTrunks(){
-    //Draw Tree Branches
-    this.trunks.forEach(trunk => {
-      trunk.forEach(l => {
-        let {startPoint, controlPoints, endPoint} = l
-
-        //Set Styles
-        stroke(10, 39, 14)
-        strokeWeight(1.5);
-        noFill()
-
-        //Style the line
-        beginShape();
-        vertex(startPoint.x, startPoint.y)
-        bezierVertex(
-          controlPoints[0].x, controlPoints[0].y,
-          controlPoints[1].x, controlPoints[1].y,
-          endPoint.x, endPoint.y
-        )
-        endShape();
-      })
-    })
-
-    //Unset Styles
-    noStroke();
-    noFill();
-  }
-
   generatePoints(){
-    let {treeBatchHeight, numPointsPerRow, rowSize} = this;
-    
-    //Create the Points, used to group the leaves
+    let {treeBatchHeight, numPointsPerRow, rowSize, trunkHeight, midpoint:m} = this;
     let points = [];
     let min_x = 50;
     let max_x = width-50;
-    let curr_y = rowSize
-    for(let i=0; i < height - treeBatchHeight - bottom; i+=rowSize){
-      let row = [];
-      let _y = height - bottom - (curr_y)
-      let min_y = _y
-      let max_y = min_y + rowSize;
-      for(let j=0; j < numPointsPerRow; j++){
-        let p = {
-          x: random(min_x, max_x), 
-          y: random(min_y, max_y)
-        }
-        if (p.y >= treeBatchHeight) row.push(p); // dont push points that exceed the height. Remember, lower numbers for y are higher on canvas
-      }
 
-      numPointsPerRow -= 1
+    let start = height - bottom;
+    let h = start - treeBatchHeight;
+    for(let i = start; i > h; i-=rowSize){
+      console.log(h, i)
+      let row = [];
+      let min_y = i;
+      let max_y = i - rowSize;
+      for(let j=0; j < numPointsPerRow; j++){
+        let x = random(min_x, max_x);
+        let y = random(min_y, max_y)
+        let boundary = this.generatePointBoundary(x, y, m.x, m.y)
+        row.push({x, y, boundary});
+          
+        //Draw points
+        if (debug) { 
+          fill("red");
+          circle(x,y,5);
+        }
+      }
 
       // Find the point with the smallest and largest x value in the row
       let minPoint = row.reduce((min, p) => p.x < min.x ? p : min, row[0]);
@@ -210,141 +191,84 @@ class TreeBatch {
       points.push(row)
 
       //Increment min/max x, while making sure we dont exceed midpoint. Otherwise, you will just start an inverted triange shape and end up with an hour glass
-      curr_y += rowSize
-      min_x += min_x > width/2 ? 0 : random(-50, 100)
-      max_x += max_x < width/2 ? 0 : random(-100, 50)
+      min_x += min_x > width/2 ? 0 : random(-25, 50)
+      max_x += max_x < width/2 ? 0 : random(-50, 25)
     }
+          
     return points;
   }
 
-  getLeafBoundary(p){
-    let {midpoint} = this;
-    let start, stop, quad;
-    let min = p.y >= 50 ? .2 * p.y : 50
-    let max = p.y >= 50 ? .35 * p.y : 50
-    let boundaryRadius = random(min, max); // radius grows as we get higher, so that leaves are more spread out
+  generatePointBoundary(px, py, mx, my){
+    let min = 50;
+    let max = 50 * (py/100);
+    let radius = random(min, max); // radius grows as we get higher, so that leaves are more spread out
     
-    // configure each boundary. Start/Stop create an open face circle. set debug to true to see
-    if (p.x < midpoint.x && p.y < midpoint.y) {
-      //upper left, empty lower right
-      quad = "ul";
-      start = HALF_PI;
-      stop = TWO_PI;
-    } else if (p.x >= midpoint.x && p.y < midpoint.y) {
-      //upper right, empty lower left
-      quad = "ur";
-      start = PI;
-      stop = HALF_PI;
-    } else if (p.x < midpoint.x && p.y >= midpoint.y) {
-      //lower left, empty upper right
-      quad = "ll";
-      start = 0;
-      stop = HALF_PI + PI;
-    } else { 
-      // lower right, empty upper left
-      quad = "lr";
-      start = -HALF_PI;
-      stop = PI;
-    }
-    return {start, stop, quad, boundaryRadius};
+    // Calculate the differences in x and y and calc angle us atan2
+    let dx = mx - px;
+    let dy = my - py;
+    let angle = atan2(dy, dx);
+    let start = angle + QUARTER_PI
+    let stop = angle - QUARTER_PI
+    
+    return {start, stop, radius};
   }
 
-  generateLeavesAndCircles() {
-    let {leafWidth, numLeavesPerPoint} = this;
-    let points = this.generatePoints();
-    let leaves = [];
+  generateCircles() {
+    let {points} = this;
     let circles = [];
     
     // Create leaves that surround and face each point
     points.forEach(row => {
-      row.forEach((p, i) => {
-        //Leaves will be drawn within this arc shape
-        let {start, stop, quad, boundaryRadius} = this.getLeafBoundary(p)
-        
-        if (debug) {
-          fill("red");
-          circle(p.x,p.y,5);
-        }
-
+      row.forEach(({x:px, y:py, boundary:b, isLeftMost, isRightMost}) => {
         if (debug) {
           fill(color(300, 100, 50, 0.5))
           stroke("green")
-          arc(p.x, p.y, boundaryRadius, boundaryRadius, start, stop )
+          let d = b.radius * 2;
+          arc(px, py, d, d, b.start, b.stop )
         }
 
-        circles.push({
-          x:p.x, y: p.y, r:boundaryRadius, 
-          isLeftMost: p?.isLeftMost, 
-          isRightMost: p?.isRightMost
-        })
-        
-        // For each leaf, find a spot around the point to draw it
-        for (let i = 0; i < numLeavesPerPoint; i++) {
-          let w = random(leafWidth-2,leafWidth+2)
-          let h = random(leafWidth-2,leafWidth+2)
-          
-          // Only draw leaves if they fall within the boundary 
-          // The following code ensures the angle falls within acceptable range
-          let angle;
-          if (quad === "lr" || quad === "ll"){
-            angle = random(start, stop)
-          }
-          if (quad === "ur") {
-            angle = random(-start, stop)
-          }
-          if (quad === "ul") {
-            angle = random(start, stop)
-          }
-          let r = boundaryRadius/2
-          let x = p.x + (cos(angle) * random(r-(r/2), r));
-          let _y = p.y + (sin(angle) * random(r-(r/2), r));
-          let y = _y > (height-bottom) ? height-bottom+random(0,10) : _y; //If y is below bottom (ground), set to y to bottom with some variance to draw "fallen leaves"
+        circles.push({ x:px, y:py, r:b.radius, isLeftMost, isRightMost })
+      })
+    })
+    return circles;
+  }
+
+  generateLeaves() {
+    let {leafWidth, numLeavesPerPoint, points} = this;
+    let leaves = [];
     
+    // Create leaves that surround and face each point
+    points.forEach(row => {
+      let num = numLeavesPerPoint
+      row.forEach(({x:px, y:py, boundary:b}) => {
+        // For each leaf, find a spot around the point to draw it
+        console.log("startnum", num)
+        let row = []
+        for (let i = 0; i < num; i++) {
+          console.log("i", i)
+          let w = random(leafWidth-2,leafWidth+2)
+          let h = w
+          // Only draw leaves if they fall within the boundary 
+          let angle = random(b.start, b.start + 3*HALF_PI)
+          let r = random(b.radius/3, b.radius/2) 
+          let x = px + (cos(angle) * r);
+          let y = py + (sin(angle) * r) > (height-bottom) //If y is below bottom (ground), set to y to bottom with some variance to draw "fallen leaves"
+            ? height-bottom+random(0,10) 
+            : py + (sin(angle) * r); 
+          row.push({x, y, w, h, start:angle-HALF_PI, stop:angle+HALF_PI })
+          
           if (debug) {
             fill("blue")
             circle(x,y,w)
           }
-
-          leaves.push({
-            x, y, w, h, 
-            start: angle - HALF_PI, 
-            stop: angle + HALF_PI
-          })
         }
-        
-        //Decrement numLeavesPerPoint so that upper rows have few leaves, min 5
-        numLeavesPerPoint = numLeavesPerPoint > 5 
-          ? numLeavesPerPoint - 1 
-          : 5
+        leaves.push(row)
+        console.log("num", num)
+        num = num > 5 ? num - 10 : 5  //Decrement numLeavesPerPoint so that upper rows have few leaves, min 5
       })
     })
 
-    return {leaves, circles};
-  }
-
-  drawLeaves() {
-    stroke("black");
-    strokeWeight(1);
-    noFill();
-    if ( random([0,1,1]) ) fill(fallColorFills[random([0,1,1,2,2,3,3,4,4])])
-    this.leaves.forEach( ({x, y, w, h, start, stop}) => {
-      arc(x, y, w, h, start, stop);
-    })
-  }
-
-  generateCircleBufferImage() {
-    this.circleBuffer.noStroke();
-    this.circleBuffer.fill(lightFallColorFills[random([0,1,2,3,4])]);
-    this.circles.forEach(c => {
-      // this.circleBuffer.arc(p.x, p.y, r, r, start, stop);
-      if (c.isLeftMost || c.isRightMost) {
-        this.circleBuffer.stroke(0);
-      } else {
-        this.circleBuffer.noStroke();
-      }
-      this.circleBuffer.circle(c.x, c.y, c.r);
-    })
-    this.circleBuffer.noFill();
+    return leaves;
   }
 
   drawBlob(x, y, r) {
@@ -401,6 +325,76 @@ class TreeBatch {
   }
 }
 
+function drawLeaf({x, y, w, h, start, stop}) {
+  //Set Styles
+  stroke("black");
+  strokeWeight(1);
+  noFill();
+  if ( random([0,1,1]) ) fill(fallColorFills[random([0,1,1,2,2,3,3,4,4])])
+  
+  // Draw the Leaf
+  arc(x, y, w, h, start, stop);
+}
+
+function drawToBuffer(circleBuffer, {x,y,r,isRightMost, isLeftMost}) {
+
+  circleBuffer.noStroke();
+  circleBuffer.fill(lightFallColorFills[random([3])]);
+  
+  // if (isLeftMost || isRightMost) {
+  //   circleBuffer.stroke(0);
+  // } else {
+  //   circleBuffer.noStroke();
+  // }
+  circleBuffer.circle(x, y, r);
+  circleBuffer.noFill();
+}
+
+function drawCircleBuffer(circleBuffer){
+  blendMode(MULTIPLY);
+  image(circleBuffer, 0, 0);
+  blendMode(BLEND); 
+}
+
+function drawTrunk(tree, trunkHeight, trunkWidth){
+  let trunkBuffer = createGraphics(cw, ch);
+  tree.forEach(line => {
+    let {startPoint, controlPoints, endPoint} = line
+
+    //Set Styles
+    trunkBuffer.stroke(10, 39, 14)
+    trunkBuffer.strokeWeight(1);
+    trunkBuffer.noFill()
+
+    //Style the line
+    trunkBuffer.beginShape();
+    trunkBuffer.vertex(startPoint.x, startPoint.y)
+    trunkBuffer.bezierVertex(
+      controlPoints[0].x, controlPoints[0].y,
+      controlPoints[1].x, controlPoints[1].y,
+      endPoint.x, endPoint.y
+    )
+    trunkBuffer.endShape();
+
+    // Erase a circle area
+    if (random([0,1])) randomErase();
+    
+    //Unset Styles
+    trunkBuffer.noStroke();
+    trunkBuffer.noFill();
+
+    function randomErase(){
+      trunkBuffer.fill("red")
+      trunkBuffer.noStroke(10)
+      if (!debug) trunkBuffer.erase();
+      trunkBuffer.circle(startPoint.x+random(-trunkWidth/2, trunkWidth/2), endPoint.y-trunkHeight/2, 30);
+      if (!debug) trunkBuffer.noErase();
+    }
+  })
+
+  image(trunkBuffer, 0, 0)
+}
+
 function drawGroundLine(xStart, yStart, xEnd){
   let x = xStart;
   let y = yStart;
@@ -448,6 +442,12 @@ function drawGroundLine(xStart, yStart, xEnd){
 
     x += tickLength;
   }
+}
+
+function calculateDistance(x1, y1, x2, y2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  return Math.sqrt(dx * dx + dy * dy);
 }
 
 function mousePressed() {
